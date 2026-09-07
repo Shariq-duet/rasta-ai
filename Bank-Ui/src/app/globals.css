@@ -1,0 +1,365 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand identity */
+    --brand: 61 58 199; /* #3D3AC7 indigo */
+    --brand-deep: 40 38 130; /* #282682 */
+    --accent: 34 211 238; /* #22D3EE cyan */
+    --secondary: 5 150 105; /* #059669 emerald */
+
+    /* Neutral system carried over from the prototype */
+    --ink: 23 35 62; /* #17233E */
+    --ink-muted: 120 131 155; /* #78839B */
+    --ink-faint: 155 164 182; /* #9BA4B6 */
+    --line: 232 235 242; /* #E8EBF2 */
+    --surface: 255 255 255;
+    --canvas: 247 248 252; /* #F7F8FC */
+
+    /* Phone shell width; desktop uses --content-width beside the sidebar. */
+    --app-width: 440px;
+    --content-width: 1360px;
+    --sidebar-width: 272px;
+    --topbar-height: 60px;
+    --bottomnav-height: 68px;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    /* Body copy sits at the base of the scale; headings opt into --font-display. */
+    font-size: 0.875rem;
+    line-height: 1.5;
+    letter-spacing: 0;
+    /* Desktop backdrop so the phone-width shell reads as intentional. */
+    background-image: radial-gradient(circle at 12% 0%, #ececfa 0, transparent 32rem),
+      radial-gradient(circle at 88% 100%, #e9f6f7 0, transparent 30rem);
+    background-attachment: fixed;
+  }
+
+  /* One consistent, high-contrast focus ring everywhere. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2 ring-offset-white;
+  }
+
+  ::selection {
+    background: rgb(var(--brand) / 0.16);
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  /*
+   * Form controls inherit the browser's own font by default — the one place
+   * text escapes the design system. Pull them back onto the body face.
+   */
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
+
+  /* Placeholders are third-tier text, not body text. */
+  ::placeholder {
+    @apply text-ink-faint;
+    opacity: 1;
+  }
+
+  /* Date inputs render their own placeholder text on WebKit. */
+  ::-webkit-datetime-edit {
+    @apply text-ink;
+  }
+
+  ::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.55;
+  }
+}
+
+@layer components {
+  /*
+   * THE TYPE SCALE — six roles, nothing else.
+   *
+   * Display / h1 / h2 / h3 use Plus Jakarta Sans with progressively looser
+   * negative tracking (tighter as the size grows, which is how large type wants
+   * to be set). Body and caption use Inter at normal tracking. Numerals get
+   * their own role so amounts align in lists.
+   *
+   * Tier hierarchy, applied consistently:
+   *   1  primary   text-ink        headings, amounts, row titles
+   *   2  secondary text-ink-muted  dates, categories, helper text
+   *   3  label     text-ink-faint  uppercase eyebrows, placeholders
+   */
+
+  /* Display — balance figures and the one hero number per screen. */
+  .type-display {
+    @apply font-display text-[1.875rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-ink;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* h1 — page titles. */
+  .heading-lg {
+    @apply font-display text-[1.375rem] font-extrabold leading-[1.2] tracking-[-0.025em] text-ink;
+  }
+
+  /* h2 — section titles. */
+  .heading-md {
+    @apply font-display text-[1.0625rem] font-bold leading-[1.3] tracking-[-0.018em] text-ink;
+  }
+
+  /* h3 — card titles and row groups. */
+  .heading-sm {
+    @apply font-display text-[0.9375rem] font-bold leading-[1.35] tracking-[-0.012em] text-ink;
+  }
+
+  /* Row title — the primary line in a list row. */
+  .type-row-title {
+    @apply text-[0.8125rem] font-semibold leading-[1.4] tracking-normal text-ink;
+  }
+
+  /* Field label — the small caption above an input. */
+  .type-label {
+    @apply text-[0.6875rem] font-semibold leading-[1.4] tracking-normal text-ink-muted;
+  }
+
+  /* Body — the default. Normal tracking, never the heading's negative tracking. */
+  .type-body {
+    @apply text-[0.8125rem] font-normal leading-[1.55] tracking-normal text-ink;
+  }
+
+  /* Secondary — dates, categories, supporting copy. */
+  .type-secondary {
+    @apply text-[0.75rem] font-normal leading-[1.5] tracking-normal text-ink-muted;
+  }
+
+  /* Caption — the smallest supporting text. */
+  .type-caption {
+    @apply text-[0.6875rem] font-normal leading-[1.45] tracking-normal text-ink-faint;
+  }
+
+  /* Eyebrow — uppercase micro-label. The only place letter-spacing goes loose. */
+  .eyebrow {
+    @apply text-2xs font-bold uppercase leading-none tracking-eyebrow text-ink-faint;
+  }
+
+  /*
+   * Amounts. Tabular figures so columns of money align, and a step heavier than
+   * the surrounding row so the number reads as the point of the line.
+   */
+  .type-amount {
+    @apply text-[0.8125rem] font-bold tracking-[-0.01em] text-ink;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .type-amount-lg {
+    @apply font-display text-[1.0625rem] font-bold tracking-[-0.02em] text-ink;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .surface-card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+
+  .hairline {
+    @apply border-b border-line last:border-b-0;
+  }
+
+  /* Scroll rails (contacts, chips) without a visible scrollbar. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Range input styled to the brand — used by the spending-limit slider. */
+  .brand-range {
+    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-line;
+    accent-color: rgb(var(--brand));
+  }
+
+  .brand-range::-webkit-slider-thumb {
+    @apply h-5 w-5 appearance-none rounded-full border-[3px] border-white bg-brand-600;
+    box-shadow: 0 2px 8px rgb(var(--brand) / 0.4);
+  }
+
+  .brand-range::-moz-range-thumb {
+    @apply h-5 w-5 rounded-full border-[3px] border-white bg-brand-600;
+    box-shadow: 0 2px 8px rgb(var(--brand) / 0.4);
+  }
+}
+
+@layer utilities {
+  .app-shell-width {
+    max-width: var(--app-width);
+  }
+
+  /* Respects the notch / home indicator once wrapped in Capacitor. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Voice-agent highlight (src/lib/agentBridge.js). The Python agent's
+ * AGENT_HIGHLIGHT messages drop this class onto the targeted element: a
+ * steady brand ring with a breathing halo, legible from across a room.
+ *
+ * Deliberately outside @layer so the ring reliably paints over any utility
+ * shadow the element already carries, and on a white gap so it still reads
+ * against the indigo balance card and other brand fills.
+ */
+@keyframes agent-highlight-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgb(var(--surface)),
+      0 0 0 6px rgb(var(--brand)),
+      0 0 24px 4px rgb(var(--brand) / 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgb(var(--surface)),
+      0 0 0 6px rgb(var(--brand)),
+      0 0 40px 8px rgb(var(--brand) / 0.55);
+  }
+}
+
+.agent-highlight {
+  animation: agent-highlight-pulse 1.4s ease-in-out infinite;
+  position: relative;
+  z-index: 50;
+  /* White contrast ring ensures the highlight stands out against any background */
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 4px;
+}
+
+/*
+ * The global reduced-motion rule above freezes animations at their base
+ * value, which would hide the ring entirely — fall back to a static one.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .agent-highlight {
+    animation: none;
+    box-shadow:
+      0 0 0 3px rgb(var(--surface)),
+      0 0 0 6px rgb(var(--brand)),
+      0 0 24px 6px rgb(var(--brand) / 0.5);
+  }
+  .agent-indicator {
+    animation: none;
+  }
+}
+
+/*
+ * Floating arrow indicator — created by agentBridge.js and positioned above
+ * the highlighted element via fixed viewport coordinates. A large bouncing
+ * arrow with a pulsing circle behind it, impossible to miss.
+ */
+.agent-indicator {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+}
+
+.agent-indicator-arrow {
+  font-size: 48px;
+  line-height: 1;
+  color: rgb(var(--brand));
+  text-shadow:
+    -2px -2px 0 white, 2px -2px 0 white,
+    -2px  2px 0 white, 2px  2px 0 white,
+    0 3px 10px rgb(var(--brand) / 0.6);
+  animation: agent-arrow-bounce 0.7s ease-in-out infinite;
+}
+
+.agent-indicator-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(var(--brand));
+  box-shadow:
+    0 0 0 3px white,
+    0 0 20px rgb(var(--brand) / 0.8);
+  animation: agent-dot-pulse 1.4s ease-in-out infinite;
+  margin-top: 2px;
+}
+
+@keyframes agent-arrow-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+@keyframes agent-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgb(var(--brand) / 0.7);
+  }
+  50% {
+    transform: scale(1.5);
+    box-shadow: 0 0 28px rgb(var(--brand) / 0.3);
+  }
+}
+
+/*
+ * Brief flash applied by agentBridge.js when it receives an AGENT_CLICK —
+ * gives the agent's simulated click a visible pop before the element's own
+ * handler navigates away. Removed after 400 ms by the bridge.
+ */
+@keyframes agent-click-flash {
+  0%   { box-shadow: inset 0 0 0 3px rgb(var(--brand) / 0.8); }
+  50%  { box-shadow: inset 0 0 0 3px rgb(var(--brand) / 0.4), 0 0 12px rgb(var(--brand) / 0.5); }
+  100% { box-shadow: inset 0 0 0 3px transparent; }
+}
+
+.agent-click {
+  animation: agent-click-flash 0.4s ease-out;
+  box-shadow: 0 0 0 4px rgb(var(--brand) / 0.6), 0 0 24px rgb(var(--brand) / 0.4);
+}

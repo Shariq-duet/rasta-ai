@@ -1,0 +1,24 @@
+# Python voice agent
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node / Next.js build output
+node_modules/
+.next/
+out/
+
+# Environment & secrets
+.env*
+!.env.example
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
