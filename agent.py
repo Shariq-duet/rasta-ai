@@ -42,6 +42,15 @@ from edge_tts import Communicate
 
 from intent import classify_intent
 
+# Windows consoles often default to cp1252, which cannot print Urdu script —
+# force UTF-8 so printing a Urdu phrase never crashes the agent.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            pass
+
 # Navigation fallbacks — each list has the mobile bottom-nav id first, then
 # the desktop sidebar equivalent. The browser bridge tries them in order and
 # highlights the first one it finds in the DOM, so the same code works on

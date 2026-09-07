@@ -12,6 +12,15 @@ import websockets
 
 import agent
 
+# Windows consoles often default to cp1252, which cannot print Urdu script —
+# force UTF-8 so printing a Urdu phrase never crashes the test.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            pass
+
 
 async def drain(ws, seconds=0.4):
     """Collect any messages waiting on the socket."""
