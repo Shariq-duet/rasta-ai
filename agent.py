@@ -34,13 +34,17 @@ import sys
 import tempfile
 import time
 import unicodedata
-
 import websockets
-import sounddevice as sd
-from scipy.io import wavfile as _wav
-from edge_tts import Communicate
 
+try:
+    import sounddevice as sd
+    from scipy.io import wavfile as _wav
+except (ImportError, OSError):
+    sd = None
+    _wav = None
 from intent import classify_intent
+from transcription import transcribe_audio
+from tts import synthesize_speech
 
 # Windows consoles often default to cp1252, which cannot print Urdu script —
 # force UTF-8 so printing a Urdu phrase never crashes the agent.
@@ -71,13 +75,13 @@ NAV_CERTIFICATES = ["side-nav-certificates"]
 # Navigation guidance — spoken when the agent needs the user to navigate
 # to a different screen before the guided flow can begin.
 NAV_GUIDANCE = {
-    "send_money": "پہلے رقم بھیجنے والے صفحے پر جائیں۔",
-    "pay_bill": "پہلے بل ادا کرنے والے صفحے پر جائیں۔",
-    "qr_pay": "پہلے اسکین اور پے والے صفحے پر جائیں۔",
-    "request_certificate": "پہلے سرٹیفکیٹ والے صفحے پر جائیں۔",
-    "request_cheque_book": "پہلے چیک بک والے صفحے پر جائیں۔",
-    "stop_cheque": "پہلے چیک بک والے صفحے پر جائیں۔",
-    "manage_card": "پہلے کارڈز والے صفحے پر جائیں۔",
+    "send_money": "پہلے نیچے سے پیسے بھیجنے والا پیج کھول لیں۔",
+    "pay_bill": "پہلے بل پے کرنے والے پیج پر چلے جائیں۔",
+    "qr_pay": "پہلے اسکین اور پے والا پیج کھول لیں۔",
+    "request_certificate": "پہلے سرٹیفکیٹ والے پیج پر جائیں۔",
+    "request_cheque_book": "پہلے چیک بک والے پیج پر جائیں۔",
+    "stop_cheque": "پہلے چیک بک والے پیج پر جائیں۔",
+    "manage_card": "پہلے کارڈز والے پیج پر چلے جائیں۔",
 }
 
 # Keyword fallback for when Ollama is not running. Order matters: the first
@@ -178,63 +182,57 @@ SAFE_AGENT_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 FLOW_GUIDANCE = {
     # --- send money ---
     "sendmoney-recipient-select":
-        "پہلا قدم: وصول کنندہ منتخب کریں۔ اپنے محفوظ کردہ لوگوں کی فہرست سے کسی کا نام چنیں،"
-        " یا نیا شخص شامل کرنے کے لیے 'Add new' پر کلک کریں۔",
+        "پہلے جسے پیسے بھیجنے ہیں، اس کا نام چن لیں یا نیا شخص شامل کرنے کے لیے 'Add new' پر ٹیپ کریں۔",
     "sendmoney-amount-input":
-        "دوسرا قدم: رقم درج کریں۔ آپ کتنے پیسے بھیجنا چاہتے ہیں؟ رقم ٹائپ کریں"
-        " اور پھر 'Next' دبائیں۔",
+        "اب جتنے پیسے بھیجنے ہیں وہ رقم لکھیں اور پھر 'Next' دبائیں۔",
     "sendmoney-submit":
-        "تیسرا قدم: تمام تفصیلات غور سے چیک کریں — وصول کنندہ، رقم، اور اکاؤنٹ۔"
-        " اگر سب صحیح ہے تو 'Send' کا بٹن دبائیں۔",
+        "اب ساری تفصیلات چیک کر کے 'Send' کا بٹن دبا دیں۔",
     # --- pay bill ---
     "paybill-biller-select":
-        "پہلا قدم: بل دہندہ منتخب کریں۔ کے الیکٹرک، سوئی گیس، پی ٹی سی ایل،"
-        " یا جو بھی بل ادا کرنا ہے اس پر کلک کریں۔",
+        "پہلے کے الیکٹرک، سوئی گیس، یا جو بھی بل ہے، وہ کمپنی سلیکٹ کر لیں۔",
     "paybill-amount-input":
-        "دوسرا قدم: بل کی رقم درج کریں۔ بل پر لکھی ہوئی رقم دیکھیں اور یہاں ٹائپ کریں۔"
-        " پھر 'Next' دبائیں۔",
+        "اب اپنے بل کی رقم لکھ کر 'Next' دبائیں۔",
     "paybill-submit":
-        "تیسرا قدم: تمام تفصیلات چیک کریں — بل دہندہ اور رقم۔"
-        " اگر سب صحیح ہے تو 'Pay' کا بٹن دبائیں۔",
+        "اب ساری تفصیلات دیکھ کر 'Pay' کا بٹن دبا دیں۔",
     # --- qr pay ---
     "qrpay-simulate-scan":
-        "پہلا قدم: اسکین بٹن دبائیں یا نیچے سے دکاندار منتخب کریں۔",
+        "اسکین کا بٹن دبائیں یا نیچے لسٹ سے دکاندار چن لیں۔",
     "qrpay-amount-input":
-        "دوسرا قدم: رقم درج کریں جو آپ ادا کرنا چاہتے ہیں۔",
+        "اب جتنی رقم ادا کرنی ہے وہ لکھ دیں۔",
     "qrpay-confirm-approve":
-        "تیسرا قدم: تفصیلات چیک کریں اور ادائیگی کے لیے 'Pay' دبائیں۔",
+        "تفصیلات چیک کریں اور پیمنٹ کے لیے 'Pay' دبا دیں۔",
     # --- certificate ---
     "certificate-option-balance":
-        "پہلا قدم: سرٹیفکیٹ کی قسم منتخب کریں — بیلنس، ٹیکس، یا اکاؤنٹ مینٹیننس۔",
+        "پہلے سرٹیفکیٹ کی قسم چن لیں — بیلنس، ٹیکس، یا مینٹیننس۔",
     "certificate-account-select":
-        "دوسرا قدم: اکاؤنٹ منتخب کریں جس کے لیے سرٹیفکیٹ چاہیے۔",
+        "اب وہ اکاؤنٹ سلیکٹ کریں جس کا سرٹیفکیٹ چاہیے۔",
     "certificate-submit":
-        "تیسرا قدم: تمام تفصیلات چیک کریں اور درخواست جمع کروائیں۔",
+        "تفصیلات چیک کر کے درخواست جمع کروا دیں۔",
     # --- cheque book request ---
     "cheque-tab-request":
-        "پہلا قدم: 'Request book' ٹیب پر جائیں۔",
+        "پہلے 'Request book' والے ٹیب پر جائیں۔",
     "cheque-account-select":
-        "دوسرا قدم: اکاؤنٹ منتخب کریں جس کے لیے چیک بک چاہیے۔",
+        "اب اپنا اکاؤنٹ منتخب کریں۔",
     "cheque-leaves-select":
-        "تیسرا قدم: پتوں کی تعداد چنیں — ۲۵، ۵۰، یا ۱۰۰۔",
+        "اب چیک کے پتوں کی تعداد چن لیں — ۲۵، ۵۰، یا ۱۰۰۔",
     "cheque-request-submit":
-        "چوتھا قدم: درخواست جمع کروائیں۔ چیک بک ۳ سے ۵ دن میں تیار ہو جائے گی۔",
+        "درخواست جمع کروا دیں، چیک بک چند دنوں میں تیار ہو جائے گی۔",
     # --- stop cheque ---
     "cheque-tab-stop":
-        "پہلا قدم: چیک روکنے والے ٹیب پر کلک کریں۔",
+        "چیک روکنے والے ٹیب پر کلک کریں۔",
     "cheque-stop-number-input":
-        "دوسرا قدم: چیک نمبر درج کریں جو آپ روکنا چاہتے ہیں۔",
+        "اب جو چیک روکنا ہے اس کا نمبر لکھیں۔",
     "cheque-stop-submit":
-        "تیسرا قدم: چیک روکنے کی درخواست جمع کروائیں۔",
+        "چیک روکنے کی درخواست سبمٹ کر دیں۔",
     # --- card management ---
     "cards-open-card-debit-visa":
-        "پہلا قدم: اپنے کارڈ پر کلک کریں۔",
+        "اپنے کارڈ پر کلک کریں۔",
     "cards-freeze-toggle":
-        "دوسرا قدم: کارڈ منجمد کریں یا کھولیں۔",
+        "یہاں سے کارڈ کو فریز یا ان فریز کر لیں۔",
     "cards-view-pin":
-        "تیسرا قدم: اپنا پن دیکھنے کے لیے 'Reveal' دبائیں۔",
+        "اپنا پن دیکھنے کے لیے 'Reveal' دبائیں۔",
     "cards-block-card":
-        "چوتھا قدم: اگر ضرورت ہو تو کارڈ مکمل طور پر بلاک کریں۔",
+        "کارڈ مکمل طور پر بلاک کرنے کے لیے یہاں دبائیں۔",
 }
 
 # Guided multi-step flows: saying "next" on the same screen walks
@@ -366,11 +364,11 @@ def fallback_classify(transcript: str) -> dict:
 
 
 def classify(transcript: str) -> dict:
-    """LLM first; keyword fallback when Ollama is unreachable or errors out."""
+    """LLM first (Groq cloud or Ollama); keyword fallback when unreachable."""
     try:
         return classify_intent(transcript, current_screen or "unknown-screen")
-    except Exception as error:  # Ollama down, model missing, timeout, bad JSON...
-        print(f"[intent] Ollama unavailable ({type(error).__name__}) — using keyword fallback")
+    except Exception as error:
+        print(f"[intent] LLM unavailable ({type(error).__name__}) — using keyword fallback")
         return fallback_classify(transcript)
 
 
@@ -389,34 +387,34 @@ def decide_target(intent: str, screen: str):
         return [steps[index]]
 
     if intent == "check_balance":
-        if screen == "home-screen":
-            return ["home-balance-amount"]
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-balance-amount", "balance-card"]
         return NAV_HOME
     if intent == "send_money":
-        if screen == "home-screen":
-            return ["home-quick-action-send"]
-        if screen == "sendmoney-confirm-screen":
-            return ["sendmoney-confirm-approve"]
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-quick-action-send", "send_money"]
+        if screen in ("sendmoney-confirm-screen", "SendMoney"):
+            return ["sendmoney-confirm-approve", "send-submit-btn"]
         if screen == "sendmoney-success-screen":
             return ["sendmoney-success-home"]
         return NAV_TRANSFER
     if intent == "pay_bill":
-        if screen == "home-screen":
-            return ["home-quick-action-paybill"]
-        if screen == "paybill-confirm-screen":
-            return ["paybill-confirm-approve"]
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-quick-action-paybill", "pay_bill"]
+        if screen in ("paybill-confirm-screen", "BillPayments"):
+            return ["paybill-confirm-approve", "bill-submit-btn"]
         if screen == "paybill-success-screen":
             return ["paybill-success-home"]
         return NAV_BILLS
     if intent == "check_transactions":
-        if screen == "home-screen":
+        if screen in ("home-screen", "Dashboard"):
             return ["home-transactions-see-all"]
         if screen == "statements-screen":
             return ["statements-totals"]
         return NAV_STATEMENTS
     if intent == "view_cards":
-        if screen == "cards-screen":
-            return ["cards-open-card-debit-visa"]
+        if screen in ("cards-screen", "Dashboard", "CardManagement"):
+            return ["cards-open-card-debit-visa", "card_management"]
         return NAV_CARDS
     if intent == "view_analytics":
         return NAV_ANALYTICS
@@ -429,10 +427,10 @@ def decide_target(intent: str, screen: str):
     if intent == "view_profile":
         return NAV_PROFILE
     if intent == "qr_pay":
-        if screen == "home-screen":
-            return ["home-quick-action-qr"]
-        if screen == "qr-pay-screen":
-            return ["qrpay-simulate-scan"]
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-quick-action-qr", "qr_pay"]
+        if screen in ("qr-pay-screen", "QR"):
+            return ["qrpay-simulate-scan", "qr-scan-btn"]
         return NAV_QR
     if intent == "request_certificate":
         if screen == "certificates-screen":
@@ -455,32 +453,44 @@ def decide_target(intent: str, screen: str):
     return []
 
 
-async def send_highlight(target_ids, flow_guidance=None):
-    """Send AGENT_HIGHLIGHT with a list of candidate ids.
+async def _client_send(client, message):
+    try:
+        if hasattr(client, "send_text"):
+            await client.send_text(message)
+        else:
+            await client.send(message)
+    except Exception as e:
+        pass
 
-    The browser bridge tries each id in order and highlights the first one
-    it finds, which handles responsive layouts (mobile vs desktop nav).
-    If flow_guidance is provided, the browser speaks it via Web Speech API.
+
+async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None):
+    """Send AGENT_HIGHLIGHT with candidate ids, guidance text, and high-fidelity neural audio.
+
+    The browser bridge highlights the element and plays the neural audio directly.
     """
     if isinstance(target_ids, str):
         target_ids = [target_ids]
-    if not target_ids:
+    if not target_ids and not audio_bytes:
         print("[highlight] nothing to highlight")
         return
     if not connected_clients:
         print("[highlight] no browser connected — open the app first")
         return
-    payload = {"type": "AGENT_HIGHLIGHT", "targetIds": target_ids}
+    payload = {"type": "AGENT_HIGHLIGHT", "targetIds": target_ids or []}
     if flow_guidance:
         payload["flowGuidance"] = flow_guidance
+    if audio_bytes:
+        payload["audio"] = base64.b64encode(audio_bytes).decode("utf-8")
     message = json.dumps(payload, ensure_ascii=False)
-    await asyncio.gather(*(client.send(message) for client in connected_clients))
+    await asyncio.gather(*(_client_send(client, message) for client in list(connected_clients)))
     label = flow_guidance or target_ids
     print(f"[highlight] -> {label}")
 
 
 def record_mic(seconds: float = 4.0) -> str:
     """Record from the default microphone; return path to a temp WAV file."""
+    if not sd or not _wav:
+        raise RuntimeError("sounddevice not available (cloud/headless environment)")
     rate = 16_000
     print(f"[mic] recording {seconds}s from default microphone...")
     audio = sd.rec(int(seconds * rate), samplerate=rate, channels=1, dtype="int16")
@@ -511,26 +521,13 @@ async def send_click(target_id: str):
         print("[click] no browser connected")
         return
     message = json.dumps({"type": "AGENT_CLICK", "targetId": target_id})
-    await asyncio.gather(*(client.send(message) for client in connected_clients))
+    await asyncio.gather(*(_client_send(client, message) for client in list(connected_clients)))
     print(f"[click] -> {target_id}")
 
 
 def transcribe_file(path: str) -> str:
-    """Blocking faster-whisper call — always run through an executor.
-
-    Transcribes with the language the user chose at startup (no auto-detect,
-    no dual-pass). Whisper is forced to one language so it cannot mishear
-    Urdu as Hindi/Thai/Chinese.
-    """
-    global _whisper_model
-    from faster_whisper import WhisperModel  # heavy import, only when needed
-
-    if _whisper_model is None:
-        print("[stt] loading whisper (first run also downloads the model)...")
-        _whisper_model = WhisperModel("medium", device="cpu", compute_type="int8")
-
-    segments, _ = _whisper_model.transcribe(path, language=_stt_language)
-    result = " ".join(seg.text.strip() for seg in segments if seg.text.strip()).strip()
+    """Transcribe audio using fast cloud STT (Groq Whisper / AssemblyAI) with local faster-whisper fallback."""
+    result = transcribe_audio(path, language=_stt_language)
     if result:
         print(f"[stt] ({_stt_language}) \"{result}\"")
     else:
@@ -539,7 +536,7 @@ def transcribe_file(path: str) -> str:
 
 
 async def handle_browser_audio(data: dict):
-    """Audio recorded by the in-app mic button: save, transcribe, classify."""
+    """Audio recorded by the in-app mic button: transcribe via fast cloud STT, then classify."""
     loop = asyncio.get_event_loop()
     try:
         raw = base64.b64decode(data.get("audio", ""))
@@ -551,12 +548,12 @@ async def handle_browser_audio(data: dict):
         return
     mime = data.get("mimeType") or "audio/webm"
     ext = ".webm" if "webm" in mime else (".m4a" if "mp4" in mime else ".ogg")
-    path = os.path.join(tempfile.gettempdir(), f"agent_browser_{int(time.time() * 1000)}{ext}")
-    with open(path, "wb") as handle:
-        handle.write(raw)
-    print(f"[mic] browser audio saved ({len(raw) // 1024} KB)")
+    filename = f"browser_mic{ext}"
+    print(f"[mic] browser audio received ({len(raw) // 1024} KB)")
     try:
-        transcript = await loop.run_in_executor(None, transcribe_file, path)
+        transcript = await loop.run_in_executor(
+            None, lambda: transcribe_audio(raw, filename=filename, language=_stt_language)
+        )
     except Exception as error:
         print(f"[stt] failed: {error}")
         return
@@ -582,7 +579,7 @@ def cancel_flow_advance():
 
 
 async def _auto_advance_flow():
-    """Timer callback — advance the guided flow automatically."""
+    """Timer callback — advance the guided flow automatically with neural voice guidance."""
     global _flow_timer
     _flow_timer = None
     if not last_intent or not current_screen:
@@ -593,9 +590,14 @@ async def _auto_advance_flow():
     if not target:
         return
     guidance = FLOW_GUIDANCE.get(target[0])
-    await send_highlight(target, flow_guidance=guidance)
+    audio_bytes = None
+    if guidance:
+        try:
+            audio_bytes = await synthesize_speech(guidance, language=_stt_language)
+        except Exception as e:
+            print(f"[tts] Auto-advance synthesis note: {e}")
+    await send_highlight(target, flow_guidance=guidance, audio_bytes=audio_bytes)
     last_highlighted = target[0]
-    # Schedule the next auto-advance
     schedule_flow_advance()
 
 
@@ -605,10 +607,9 @@ async def handle_utterance(text: str):
     if not utterance:
         return
 
-    # "next" advances the guided flow without re-classifying. Punctuation
-    # from whisper ("Next.") is stripped before matching.
+    # "next" advances the guided flow without re-classifying.
     if _normalize_command(utterance) in NEXT_WORDS and last_intent:
-        intent_result = {"intent": last_intent, "confidence": "high (next)"}
+        intent_result = {"intent": last_intent, "confidence": "high (next)", "language": _stt_language}
     else:
         intent_result = classify(utterance)
         if intent_result["intent"] != "unknown":
@@ -618,7 +619,13 @@ async def handle_utterance(text: str):
     print(f"[intent] {json.dumps(intent_result, ensure_ascii=False)}")
 
     if intent == "unknown":
-        print("[agent] sorry, I did not recognise that request")
+        reply = intent_result.get("reply", "معذرت، میں آپ کی بات سمجھ نہیں سکا۔ کیا آپ رقم بھیجنا یا بیلنس دیکھنا چاہتے ہیں؟")
+        try:
+            audio_bytes = await synthesize_speech(reply, language=intent_result.get("language", "ur"))
+            await send_highlight([], flow_guidance=reply, audio_bytes=audio_bytes)
+        except Exception:
+            pass
+        print(f"[agent] {reply}")
         return
 
     if not current_screen:
@@ -627,27 +634,29 @@ async def handle_utterance(text: str):
 
     target = decide_target(intent, current_screen)
     if target:
-        # If the target is a step in a guided flow, include step-by-step
-        # Urdu guidance that the browser will speak via Web Speech API.
         guidance = FLOW_GUIDANCE.get(target[0])
-        # If this is a flow intent and we're not on the form screen yet,
-        # speak navigation guidance so the user knows to click the nav
-        # button to reach the right screen first.
         if not guidance and intent in NAV_GUIDANCE and (intent, current_screen) not in GUIDED_STEPS:
             guidance = NAV_GUIDANCE[intent]
-        await send_highlight(target, flow_guidance=guidance)
-        last_highlighted = target[0]  # store the first candidate for `click`
-        # For non-guided intents, speak the short confirmation via edge-tts.
-        # For guided steps, the browser speaks the detailed guidance instead.
+
+        # Use contextual conversational reply or step guidance
+        spoken_text = guidance or intent_result.get("reply", "")
+        lang = intent_result.get("language", _stt_language or "ur")
+
+        audio_bytes = None
+        if spoken_text:
+            try:
+                audio_bytes = await synthesize_speech(spoken_text, language=lang)
+            except Exception as tts_err:
+                print(f"[tts] Synthesis note: {tts_err}")
+
+        await send_highlight(target, flow_guidance=spoken_text, audio_bytes=audio_bytes)
+        last_highlighted = target[0]
+
         if not guidance:
-            asyncio.create_task(speak_reply(SPEECH_REPLIES.get(intent, "")))
-            # Flow intents stay pending so auto-guide picks them up when the
-            # user reaches the form screen; anything else replaces the flow.
             if intent not in FLOW_INTENTS:
                 last_intent = None
                 cancel_flow_advance()
         else:
-            # Guided step — schedule auto-advance to the next step
             schedule_flow_advance()
     else:
         print(f"[agent] nothing mapped for intent '{intent}' on '{current_screen}'")
@@ -663,6 +672,12 @@ async def handler(websocket):
             if data.get("type") == "AGENT_AUDIO":
                 await handle_browser_audio(data)
                 continue
+            if data.get("type") == "AGENT_UTTERANCE":
+                text = data.get("text", "").strip()
+                if text:
+                    print(f"[client] utterance: '{text}'")
+                    await handle_utterance(text)
+                continue
             if data.get("type") == "AGENT_LANGUAGE":
                 _stt_language = data.get("language", "en")
                 print(f"[lang] speech-to-text language set to: {_stt_language}")
@@ -677,27 +692,37 @@ async def handler(websocket):
                 # End the guided flow when the user reaches a success screen —
                 # highlight the "Back to home" button and speak a completion
                 # message so the demo has a natural finish.
+                # End the guided flow when the user reaches a success screen
                 if current_screen in FLOW_END_SCREENS:
                     if last_intent:
                         home_target = FLOW_END_HOME.get(current_screen)
                         end_guidance = FLOW_END_GUIDANCE.get(current_screen)
                         if home_target:
-                            await send_highlight(home_target, flow_guidance=end_guidance)
+                            audio_bytes = None
+                            if end_guidance:
+                                try:
+                                    audio_bytes = await synthesize_speech(end_guidance, language=_stt_language)
+                                except Exception:
+                                    pass
+                            await send_highlight(home_target, flow_guidance=end_guidance, audio_bytes=audio_bytes)
                             last_highlighted = home_target[0]
                     last_intent = None
 
-                # Auto-guide: if the user navigated to a form screen and we
-                # have a pending flow intent, automatically highlight the first
-                # step and speak the guidance — no re-engagement needed.
+                # Auto-guide: if user reaches a form screen with pending intent
                 if (last_intent
                         and current_screen in FORM_SCREENS
                         and (last_intent, current_screen) in GUIDED_STEPS):
                     target = decide_target(last_intent, current_screen)
                     if target:
                         guidance = FLOW_GUIDANCE.get(target[0])
-                        await send_highlight(target, flow_guidance=guidance)
+                        audio_bytes = None
+                        if guidance:
+                            try:
+                                audio_bytes = await synthesize_speech(guidance, language=_stt_language)
+                            except Exception:
+                                pass
+                        await send_highlight(target, flow_guidance=guidance, audio_bytes=audio_bytes)
                         last_highlighted = target[0]
-                        # Schedule auto-advance to the next step
                         schedule_flow_advance()
     except websockets.exceptions.ConnectionClosed:
         pass
@@ -770,11 +795,16 @@ async def console():
 
 
 async def main():
-    async with websockets.serve(handler, "localhost", 8765):
-        print("Voice agent running on ws://localhost:8765")
-        print("Open the banking app in the browser — it connects automatically.")
+    port = int(os.environ.get("PORT", 8765))
+    host = os.environ.get("HOST", "0.0.0.0")
+    async with websockets.serve(handler, host, port):
+        print(f"Voice agent running on ws://{host}:{port}")
+        print("Open the banking app in the browser or mobile app — connects automatically.")
         print("Use the language toggle in the UI to switch between English and Urdu.")
-        await console()
+        if sys.stdin.isatty():
+            await console()
+        else:
+            await asyncio.Event().wait()
 
 
 async def run_self_test():

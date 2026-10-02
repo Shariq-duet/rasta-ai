@@ -1,9 +1,14 @@
 # Python voice agent — install with:  pip install -r requirements.txt
-websockets        # agent.py — WebSocket server the browser app connects to
-requests          # intent.py — talks to the local Ollama LLM API
+websockets        # agent.py — WebSocket server
+fastapi           # server.py — production cloud API & WebSocket handler
+uvicorn           # ASGI server for FastAPI
+requests          # intent.py & cloud STT — talks to Groq / Ollama API
+python-dotenv     # loads .env for API keys
 
-# Only needed for the `voice <file.ogg>` command in agent.py:
-faster-whisper    # local speech-to-text (first run downloads the ~1.5 GB model)
+# Fast Cloud STT & Local Fallback:
+# Groq Whisper and LLM use standard HTTPS requests (no heavy GPU/torch needed)
+# faster-whisper is kept as an offline fallback if internet is unavailable:
+# faster-whisper
 
 # Microphone recording (the `mic` command in agent.py):
 sounddevice       # records from the default microphone via PortAudio
