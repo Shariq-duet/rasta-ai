@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rasta AI — Voice-Guided Digital Banking Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-surface: #0d121d;
+      --bg-card: rgba(18, 24, 38, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(16, 185, 129, 0.3);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-urdu: 'Noto Nastaliq Urdu', serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient background gradient orbs */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+      animation: float 20s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, #059669 0%, transparent 70%); top: -15%; left: -10%; }
+    .orb-2 { width: 45vw; height: 45vw; background: radial-gradient(circle, #0284c7 0%, transparent 70%); bottom: -10%; right: -5%; animation-duration: 25s; }
+    .orb-3 { width: 35vw; height: 35vw; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); top: 40%; left: 35%; opacity: 0.2; animation-duration: 18s; }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 100;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--emerald), var(--cyan), var(--purple));
+      width: 14.28%;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px var(--cyan);
+    }
+
+    /* Top Brand Bar */
+    .top-header {
+      position: fixed;
+      top: 1.5rem;
+      left: 2rem;
+      right: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      pointer-events: none;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      pointer-events: auto;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--emerald), #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      box-shadow: 0 0 20px var(--emerald-glow);
+    }
+    .logo-text {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .logo-tag {
+      font-size: 0.75rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--emerald);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 0.5rem;
+      pointer-events: auto;
+    }
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Slide Deck Viewport */
+    .presentation-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 6rem;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96) translateY(20px);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+    }
+    .slide.prev {
+      transform: scale(1.02) translateY(-20px);
+    }
+
+    .slide-inner {
+      max-width: 1200px;
+      width: 100%;
+      height: 100%;
+      max-height: 720px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Typography & Headers */
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--cyan);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      width: fit-content;
+    }
+    .slide-badge.purple {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #a78bfa;
+    }
+    .slide-badge.emerald {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--emerald);
+    }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .slide-subtitle {
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 800px;
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.75rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+
+    /* Glass Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.85rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .card.highlight {
+      border-color: var(--border-highlight);
+      box-shadow: 0 10px 30px var(--emerald-glow);
+    }
+
+    /* Glowing icons */
+    .icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      margin-bottom: 1.25rem;
+    }
+    .icon-box.emerald { color: var(--emerald); background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); }
+    .icon-box.cyan { color: var(--cyan); background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.25); }
+    .icon-box.purple { color: #a78bfa; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.25); }
+
+    /* Big Metric Display */
+    .stat-number {
+      font-family: var(--font-heading);
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--emerald) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-number.purple {
+      background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Waveform Animation */
+    .wave-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 36px;
+    }
+    .wave-bar {
+      width: 4px;
+      background: var(--emerald);
+      border-radius: 4px;
+      animation: wave 1.2s ease-in-out infinite alternate;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; height: 60%; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; height: 100%; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; height: 80%; }
+    .wave-bar:nth-child(5) { animation-delay: 0.6s; height: 40%; }
+    @keyframes wave {
+      0% { height: 20%; }
+      100% { height: 100%; }
+    }
+
+    /* Architecture Flow Pipeline */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .pipe-step {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+    .pipe-arrow {
+      font-size: 1.5rem;
+      color: var(--cyan);
+      opacity: 0.6;
+    }
+
+    /* Urdu text styling */
+    .urdu-quote {
+      font-family: var(--font-urdu);
+      font-size: 1.6rem;
+      direction: rtl;
+      line-height: 1.8;
+      color: #34d399;
+      margin-top: 0.5rem;
+    }
+
+    /* Bottom Controller Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(18, 24, 38, 0.85);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.2rem;
+      border-radius: 999px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      z-index: 50;
+    }
+    .dock-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    .dock-btn:hover {
+      background: var(--emerald);
+      color: #000;
+      border-color: var(--emerald);
+      transform: scale(1.08);
+    }
+    .slide-counter {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+    .slide-counter span {
+      color: #fff;
+    }
+
+    /* Modal / Presenter Notes Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: -320px;
+      left: 0;
+      right: 0;
+      height: 300px;
+      background: rgba(13, 18, 29, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(25px);
+      padding: 2rem 4rem;
+      transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 80;
+    }
+    .notes-drawer.open {
+      bottom: 0;
+    }
+
+    /* Grid Overview Modal */
+    .grid-overview {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 9, 14, 0.95);
+      backdrop-filter: blur(25px);
+      z-index: 90;
+      display: none;
+      padding: 4rem 6rem;
+      overflow-y: auto;
+    }
+    .grid-overview.open {
+      display: block;
+    }
+    .thumbnail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .thumb-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .thumb-card:hover {
+      border-color: var(--emerald);
+      transform: translateY(-4px);
+    }
+
+    /* Checkmark list */
+    .check-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .check-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 1.05rem;
+      color: #cbd5e1;
+    }
+    .check-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light Orbs -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Top Brand Navigation -->
+  <header class="top-header">
+    <div class="logo-container">
+      <div class="logo-icon">R</div>
+      <div class="logo-text">RASTA AI</div>
+      <div class="logo-tag">Hackathon Finalist</div>
+    </div>
+    <div class="top-actions">
+      <button class="pill-btn" onclick="toggleOverview()" title="View all slides (G)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview (G)
+      </button>
+      <button class="pill-btn" onclick="toggleNotes()" title="Speaker pitch notes (N)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Notes (N)
+      </button>
+      <button class="pill-btn" onclick="toggleFullscreen()" title="Fullscreen (F)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        Fullscreen (F)
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Slides -->
+  <main class="presentation-container">
+
+    <!-- SLIDE 1: Title & Hero -->
+    <section class="slide active" id="slide-1" data-notes="Opening hook: Welcome judges. In Pakistan, millions have smartphones, but digital banking remains out of reach because apps are too confusing. We built Rasta AI to eliminate that cognitive barrier through conversational voice guidance in local Urdu.">
+      <div class="slide-inner" style="align-items: center; text-align: center;">
+        <div class="slide-badge emerald">
+          <div class="wave-container" style="height: 16px;">
+            <div class="wave-bar" style="width: 2px;"></div>
+            <div class="wave-bar" style="width: 2px;"></div>
+            <div class="wave-bar" style="width: 2px;"></div>
+            <div class="wave-bar" style="width: 2px;"></div>
+          </div>
+          Voice-Guided Financial Inclusion
+        </div>
+        <h1 class="slide-title" style="font-size: 5rem; margin-bottom: 1.5rem;">RASTA AI</h1>
+        <p class="slide-subtitle" style="font-size: 1.75rem; color: #cbd5e1; max-width: 900px; margin-bottom: 2rem;">
+          Voice-Guided Digital Banking Assistant
+        </p>
+        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); padding: 1.25rem 2.5rem; border-radius: 999px; backdrop-filter: blur(12px); margin-bottom: 3rem;">
+          <span style="color: var(--cyan); font-weight: 600;">Digital inclusion through voice</span> — closing the usability gap in financial access
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <button class="pill-btn" onclick="nextSlide()" style="padding: 0.85rem 2rem; font-size: 1rem; font-weight: 700; background: var(--emerald); color: #000; border-color: var(--emerald); border-radius: 999px; box-shadow: 0 0 30px var(--emerald-glow);">
+            Start Presentation →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: The Problem -->
+    <section class="slide" id="slide-2" data-notes="Key problem: Point out that telecom access is at an all-time high with 190M+ SIMs, but financial inclusion is stalled. Why? Complex banking jargon, fear of sending money to the wrong person, and confusing multi-step menus intimidate first-time users.">
+      <div class="slide-inner">
+        <div class="slide-badge">The Problem</div>
+        <h2 class="slide-title">Hardware access is improving in Pakistan — <span style="color: #f87171; -webkit-text-fill-color: initial;">usability is not</span></h2>
+        <p class="slide-subtitle">Apps and accounts exist, but a large share of the population cannot navigate digital banking flows confidently.</p>
+        
+        <div class="grid-3">
+          <div class="card">
+            <div class="icon-box cyan">📶</div>
+            <div class="stat-number">190M+</div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">Mobile Connections</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Yet millions still visit physical branches or agents because banking apps feel alien and risky.</p>
+          </div>
+          <div class="card">
+            <div class="icon-box purple">👵</div>
+            <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; margin-top: 1rem;">Elderly & Rural Users</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Struggle with English menus, financial acronyms (IBFT, Raast, CVV), and complex 5-step confirmation screens.</p>
+          </div>
+          <div class="card highlight">
+            <div class="icon-box emerald">🎯</div>
+            <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; margin-top: 1rem;">The Usability Barrier</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Two blockers exist: <strong>Hardware access</strong> and <strong>App usability</strong>. Hardware is solved. We solve the human usability gap.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Our Solution -->
+    <section class="slide" id="slide-3" data-notes="Our Solution: Explain the 3 pillars: 1) speak naturally in everyday colloquial Urdu without memorizing commands; 2) real-time visual highlight pulse so the user visually sees what button to tap; 3) audio confirmation in natural neural speech.">
+      <div class="slide-inner">
+        <div class="slide-badge emerald">Our Solution</div>
+        <h2 class="slide-title">A voice-native co-pilot layered on top of any banking app</h2>
+        <p class="slide-subtitle">Zero retraining required. The user speaks naturally; the AI illuminates the path and speaks aloud.</p>
+        
+        <div class="grid-3" style="margin-bottom: 2rem;">
+          <div class="card">
+            <div class="icon-box emerald">🎙️</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">1. Speaks Naturally</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.4;">In casual Urdu or English:</p>
+            <div class="urdu-quote">"مجھے بجلی کا بل جمع کرنا ہے"</div>
+          </div>
+          <div class="card">
+            <div class="icon-box cyan">🧠</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">2. Understands Intent</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+              Classifies spoken intent using conversational SLM/LLM without rigid keyword matching.
+            </p>
+          </div>
+          <div class="card highlight">
+            <div class="icon-box purple">✨</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">3. Visual & Voice Guide</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+              Highlights exact buttons with glowing pulse rings, pointing arrows, and speaks each step aloud.
+            </p>
+          </div>
+        </div>
+
+        <div class="card" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); padding: 1.25rem 2rem;">
+          <strong style="color: var(--emerald);">Who it serves:</strong> Elderly citizens • Rural populations • First-time smartphone owners • Anyone excluded by app complexity.
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Need & Impact -->
+    <section class="slide" id="slide-4" data-notes="Impact: Highlight that banks don't need to rebuild their apps. Rasta AI is a lightweight overlay. Highlight the 3 core flows (balance, transfer, bills), bilingual support, and hybrid local+cloud deployment.">
+      <div class="slide-inner">
+        <div class="slide-badge purple">Need & Impact</div>
+        <h2 class="slide-title">Turning app usability from a barrier into a non-issue</h2>
+        <p class="slide-subtitle">
+          Financial inclusion efforts solved distribution. What remains is the human gap between having an app and being able to use it. Rasta AI bridges that directly.
+        </p>
+
+        <div class="grid-3" style="margin-top: 1rem;">
+          <div class="card" style="text-align: center;">
+            <div class="stat-number">3</div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Core Banking Flows</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Balance Check, Funds Transfer, and Utility Bills guided end-to-end with confirmation.</p>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div class="stat-number">2</div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Bilingual Languages</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Full support for everyday Pakistani Urdu & English with effortless auto-detection.</p>
+          </div>
+          <div class="card highlight" style="text-align: center;">
+            <div class="stat-number purple">0</div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Zero App Redesign</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Plugs on top of existing Web and React Native apps via lightweight WebSocket bridge.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Technology & Architecture -->
+    <section class="slide" id="slide-5" data-notes="Technical deep dive: Walk the judges through the real-time AI pipeline: Groq Whisper STT (~300ms) -> Groq gpt-oss-20b reasoning for colloquial Pakistani Urdu -> Deterministic state navigator (preventing hallucinations) -> ElevenLabs neural TTS streamed via WebSockets.">
+      <div class="slide-inner">
+        <div class="slide-badge cyan">Architecture & Tech Stack</div>
+        <h2 class="slide-title">Fast, Hybrid Voice AI Architecture</h2>
+        <p class="slide-subtitle">Engineered for sub-second latency, deterministic safety, and natural conversational flow.</p>
+
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="icon-box cyan" style="margin-bottom: 0.75rem;">1</div>
+            <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.35rem;">Speech-to-Text</h4>
+            <div style="font-size: 0.85rem; color: var(--emerald); font-weight: 600; margin-bottom: 0.5rem;">Groq Whisper v3 Turbo</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">~300ms latency on noisy Urdu & accented English audio. (Local faster-whisper fallback).</p>
+          </div>
+
+          <div class="pipe-arrow">→</div>
+
+          <div class="pipe-step">
+            <div class="icon-box purple" style="margin-bottom: 0.75rem;">2</div>
+            <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.35rem;">Intent Classification</h4>
+            <div style="font-size: 0.85rem; color: #a78bfa; font-weight: 600; margin-bottom: 0.5rem;">Groq LLM (gpt-oss-20b)</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Strict JSON schema, understands casual Pakistani colloquial Urdu phrasing.</p>
+          </div>
+
+          <div class="pipe-arrow">→</div>
+
+          <div class="pipe-step">
+            <div class="icon-box emerald" style="margin-bottom: 0.75rem;">3</div>
+            <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.35rem;">Deterministic Router</h4>
+            <div style="font-size: 0.85rem; color: var(--emerald); font-weight: 600; margin-bottom: 0.5rem;">State & Flow Navigator</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Eliminates hallucinations by constraining actions to validated app routes.</p>
+          </div>
+
+          <div class="pipe-arrow">→</div>
+
+          <div class="pipe-step" style="border-color: var(--border-highlight);">
+            <div class="icon-box emerald" style="margin-bottom: 0.75rem;">4</div>
+            <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.35rem;">Visual & Neural TTS</h4>
+            <div style="font-size: 0.85rem; color: var(--cyan); font-weight: 600; margin-bottom: 0.5rem;">ElevenLabs + UI Ring</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Streams high-fidelity voice confirmation and highlights the target element simultaneously.</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 12px; font-size: 0.9rem; color: var(--text-muted);">
+          ⚡ <strong>Hybrid Reliability:</strong> Deployed as a Dockerized FastAPI service on Railway with instant WebSocket streaming.
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Feasibility & What We've Built -->
+    <section class="slide" id="slide-6" data-notes="Proof of work: Emphasize to the judges that this is NOT a prototype or Figma mockup. It is a live, deployed, working system: standalone Android APK, cloud backend on Railway, responsive Web UI, with full end-to-end integration.">
+      <div class="slide-inner">
+        <div class="slide-badge emerald">Feasibility & Real Implementation</div>
+        <h2 class="slide-title">Working System, <span style="color: var(--emerald); -webkit-text-fill-color: initial;">Not a Concept</span></h2>
+        <p class="slide-subtitle">Fully implemented, end-to-end tested, and running in production right now.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="color: var(--emerald);">✓</span> Production Deliverables
+            </h3>
+            <ul class="check-list">
+              <li>
+                <div class="check-badge">✓</div>
+                <div><strong>Standalone Android APK:</strong> Native React Native app (`MeezanBankApp.apk`) with live breathing pulse target animations.</div>
+              </li>
+              <li>
+                <div class="check-badge">✓</div>
+                <div><strong>Live Railway Cloud Backend:</strong> FastAPI WebSocket agent running 24/7 on `rasta-ai-production.up.railway.app`.</div>
+              </li>
+              <li>
+                <div class="check-badge">✓</div>
+                <div><strong>Full Banking Web Dashboard:</strong> 23 screens, auto-reconnecting bridge, in-browser neural audio playback.</div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="color: var(--cyan);">✓</span> Technical Benchmarks
+            </h3>
+            <ul class="check-list">
+              <li>
+                <div class="check-badge">✓</div>
+                <div><strong>150+ Interactive Target Identifiers:</strong> Complete app map coverage for balance, send money, bill pay, cards, and QR.</div>
+              </li>
+              <li>
+                <div class="check-badge">✓</div>
+                <div><strong>Zero Hallucination Guarantee:</strong> LLM decodes intent; deterministic graph engine drives UI state.</div>
+              </li>
+              <li>
+                <div class="check-badge">✓</div>
+                <div><strong>Sub-Second Response Time:</strong> Fast Groq inference + ElevenLabs streaming under 800ms total latency.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Conclusion & Vision -->
+    <section class="slide" id="slide-7" data-notes="Closing punchline: Close with conviction. Every app in Pakistan should be accessible to everyone, regardless of literacy or digital familiarity. Rasta AI is the bridge. Invite the judges to try the live APK and web app right now!">
+      <div class="slide-inner" style="align-items: center; text-align: center;">
+        <div class="slide-badge purple">The Vision</div>
+        <h2 class="slide-title" style="font-size: 4.5rem; margin-bottom: 1.5rem;">Every app, guided by voice.</h2>
+        <p class="slide-subtitle" style="font-size: 1.6rem; color: #cbd5e1; max-width: 850px; margin-bottom: 2.5rem;">
+          Rasta AI makes digital financial services accessible to all 240M citizens — regardless of literacy, language, or tech familiarity.
+        </p>
+
+        <div style="display: flex; gap: 2rem; margin-bottom: 3rem;">
+          <div class="card" style="padding: 1.5rem 2.5rem; border-color: rgba(16, 185, 129, 0.3);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Cloud Backend</div>
+            <div style="font-weight: 700; color: var(--emerald);">rasta-ai-production.up.railway.app</div>
+          </div>
+          <div class="card" style="padding: 1.5rem 2.5rem; border-color: rgba(6, 182, 212, 0.3);">
+            <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Mobile Android App</div>
+            <div style="font-weight: 700; color: var(--cyan);">MeezanBankApp.apk (Installed)</div>
+          </div>
+        </div>
+
+        <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #fff;">
+          Thank You! Any Questions?
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Floating Controller Dock -->
+  <nav class="bottom-dock">
+    <button class="dock-btn" onclick="prevSlide()" title="Previous (Left Arrow)">❮</button>
+    <div class="slide-counter">
+      <span id="currentSlideNum">01</span> / 07
+    </div>
+    <button class="dock-btn" onclick="nextSlide()" title="Next (Right Arrow / Space)">❯</button>
+  </nav>
+
+  <!-- Speaker Notes Drawer -->
+  <aside class="notes-drawer" id="notesDrawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--cyan); font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+        🎙️ Speaker Talking Points
+      </h3>
+      <button class="pill-btn" onclick="toggleNotes()">Close [N]</button>
+    </div>
+    <p id="speakerNotesText" style="font-size: 1.15rem; line-height: 1.6; color: #e2e8f0;">
+      Opening hook: Welcome judges. In Pakistan, millions have smartphones, but digital banking remains out of reach because apps are too confusing.
+    </p>
+  </aside>
+
+  <!-- Grid Overview Modal -->
+  <div class="grid-overview" id="gridOverview">
+    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+      <h2 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">Slide Overview</h2>
+      <button class="pill-btn" onclick="toggleOverview()">Close [G]</button>
+    </div>
+    <div class="thumbnail-grid" id="thumbnailGrid" style="max-width: 1200px; margin: 2rem auto 0;"></div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    const slideNum = document.getElementById('currentSlideNum');
+    const notesDrawer = document.getElementById('notesDrawer');
+    const speakerNotesText = document.getElementById('speakerNotesText');
+    const gridOverview = document.getElementById('gridOverview');
+    const thumbnailGrid = document.getElementById('thumbnailGrid');
+
+    // Populate Slide Grid Overview
+    slides.forEach((slide, idx) => {
+      const titleElem = slide.querySelector('.slide-title');
+      const title = titleElem ? titleElem.innerText.replace(/\n/g, ' ') : `Slide ${idx + 1}`;
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb-card';
+      thumb.innerHTML = `
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--emerald); margin-bottom: 0.5rem;">SLIDE 0${idx + 1}</div>
+        <div style="font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; line-height: 1.3;">${title}</div>
+      `;
+      thumb.onclick = () => {
+        goToSlide(idx + 1);
+        toggleOverview();
+      };
+      thumbnailGrid.appendChild(thumb);
+    });
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'prev');
+        if (index + 1 === currentSlide) {
+          slide.classList.add('active');
+          const notes = slide.getAttribute('data-notes') || 'No speaker notes for this slide.';
+          speakerNotesText.innerText = notes;
+        } else if (index + 1 < currentSlide) {
+          slide.classList.add('prev');
+        }
+      });
+
+      slideNum.innerText = currentSlide.toString().padStart(2, '0');
+      progressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateSlide();
+      }
+    }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+
+    function toggleOverview() {
+      gridOverview.classList.toggle('open');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        goToSlide(1);
+      } else if (e.key === 'End') {
+        goToSlide(totalSlides);
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 'n') {
+        toggleNotes();
+      } else if (e.key.toLowerCase() === 'g') {
+        toggleOverview();
+      } else if (e.key === 'Escape') {
+        notesDrawer.classList.remove('open');
+        gridOverview.classList.remove('open');
+      }
+    });
+
+    // Touch Swipe Support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+    document.addEventListener('touchend', e => {
+      let touchEndX = e.changedTouches[0].screenX;
+      if (touchStartX - touchEndX > 50) nextSlide();
+      if (touchEndX - touchStartX > 50) prevSlide();
+    }, false);
+
+    updateSlide();
+  </script>
+</body>
+</html>
