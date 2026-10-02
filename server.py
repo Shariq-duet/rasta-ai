@@ -72,7 +72,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 # Check if reached completion screen
                 if new_screen in agent.FLOW_END_SCREENS and agent.last_intent:
                     home_target = agent.FLOW_END_HOME.get(new_screen)
-                    end_guidance = agent.FLOW_END_GUIDANCE.get(new_screen)
+                    end_guidance = agent.resolve_guidance(agent.FLOW_END_GUIDANCE, new_screen, agent._stt_language)
                     if home_target:
                         audio_bytes = None
                         if end_guidance:
@@ -80,7 +80,25 @@ async def websocket_endpoint(websocket: WebSocket):
                                 audio_bytes = await synthesize_speech(end_guidance, language=agent._stt_language)
                             except Exception:
                                 pass
-                        await agent.send_highlight([home_target], flow_guidance=end_guidance, audio_bytes=audio_bytes)
+                        await agent.send_highlight(home_target, flow_guidance=end_guidance, audio_bytes=audio_bytes)
+                    agent.last_intent = None
+
+                # Auto-guide: if user reaches a form screen with active intent
+                if (agent.last_intent
+                        and new_screen in agent.FORM_SCREENS
+                        and (agent.last_intent, new_screen) in agent.GUIDED_STEPS):
+                    target = agent.decide_target(agent.last_intent, new_screen)
+                    if target:
+                        guidance = agent.resolve_guidance(agent.FLOW_GUIDANCE, target[0], agent._stt_language)
+                        audio_bytes = None
+                        if guidance:
+                            try:
+                                audio_bytes = await synthesize_speech(guidance, language=agent._stt_language)
+                            except Exception:
+                                pass
+                        await agent.send_highlight(target, flow_guidance=guidance, audio_bytes=audio_bytes)
+                        agent.last_highlighted = target[0]
+                        agent.schedule_flow_advance()
                 continue
 
             if msg_type == "AGENT_UTTERANCE":

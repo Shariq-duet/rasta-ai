@@ -7,6 +7,7 @@ INTENT = [
     "view_cards", "view_analytics", "find_branch", "view_notifications",
     "view_statements", "view_profile", "qr_pay",
     "request_certificate", "request_cheque_book", "stop_cheque", "manage_card",
+    "next_step",
     "unknown",
 ]
 
@@ -28,6 +29,7 @@ POLITE_REPLIES = {
         "request_cheque_book": "نئی چیک بک آرڈر کرنے کے لیے اکاؤنٹ اور پتوں کی تعداد چن لیں۔",
         "stop_cheque": "چیک کی پیمنٹ روکنے کے لیے اپنا چیک نمبر یہاں لکھ دیں۔",
         "manage_card": "کارڈ فریز کرنے، پن دیکھنے یا بلاک کرنے کی سیٹنگز سامنے ہیں۔",
+        "next_step": "اگلا قدم اٹھانے کے لیے، میں نے اگلا آپشن اسکرین پر ہائی لائٹ کر دیا ہے۔",
         "unknown": "معاف کیجیے گا، میں سمجھ نہیں پایا۔ کیا آپ پیسے بھیجنا چاہتے ہیں یا بیلنس چیک کرنا چاہتے ہیں؟",
     },
     "en": {
@@ -46,6 +48,7 @@ POLITE_REPLIES = {
         "request_cheque_book": "Select your account and leaf count to order a new cheque book.",
         "stop_cheque": "Please enter your cheque number to issue a stop payment request.",
         "manage_card": "Here are your card controls to freeze your card, view PIN, or set limits.",
+        "next_step": "Here is the next step. Please follow the highlighted area on your screen.",
         "unknown": "I'm sorry, I didn't quite catch that. Would you like to check your balance, pay a bill, or transfer funds?",
     }
 }
@@ -62,14 +65,15 @@ Output format (strictly valid JSON only, no markdown, no explanation):
   "intent": "<one of the valid intents>",
   "confidence": "<high|medium|low>",
   "language": "ur|en",
-  "reply": "<friendly, everyday casual 1-2 sentence spoken reply guiding the user. Speak like a real Pakistani assistant on Easypaisa or Nayapay: use simple, everyday Urdu words like 'بٹن دبائیں', 'ٹیپ کریں', 'بیلنس دیکھ لیں', 'سلیکٹ کریں'. NEVER use poetic, literary, or archaic 'Allama Iqbal' Urdu words like 'ملاحظہ فرمائیں', 'نمایاں', 'باضابطہ', 'حاضر ہے۔'. If user spoke English, reply in friendly casual English.>"
+  "reply": "<friendly, everyday casual 1-2 sentence spoken reply guiding the user. If the user spoke English, you MUST reply in fluent, natural English with 'language': 'en'. If the user spoke Urdu or Roman Urdu, reply in simple casual everyday Urdu with 'language': 'ur'.>"
 }}
 
 Rules:
+- CRITICAL FOR NEXT / CONTINUATION: If the user asks what to do next ('what do I do next?', 'what should I do now?', 'what's the next step?', 'where do I click?', 'how do I proceed?', 'ab kya karna hai?', 'aage kya?', 'kya karun?'), classify intent as 'next_step'.
+- Language Mirroring: If the input is in English, reply in friendly English and set "language": "en". If the input is Urdu or Roman Urdu, reply in Urdu and set "language": "ur".
 - Be robust to casual phrasing, slang, and code-switching (e.g. 'mera balance kitna hai', 'send 5000 to Ali').
-- Always provide a conversational 'reply' that explains what action was taken or guides the user where to tap.
 - Keep sentences short, natural, and friendly.
-- If unclear or unrelated to banking features, set intent to 'unknown'.
+- Only if completely unclear or unrelated to banking features, set intent to 'unknown'.
 """
 
 

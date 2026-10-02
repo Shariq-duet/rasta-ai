@@ -73,15 +73,26 @@ NAV_CHEQUE_BOOK = ["side-nav-cheque-book"]
 NAV_CERTIFICATES = ["side-nav-certificates"]
 
 # Navigation guidance — spoken when the agent needs the user to navigate
-# to a different screen before the guided flow can begin.
+# to a different screen before the guided flow can begin (bilingual).
 NAV_GUIDANCE = {
-    "send_money": "پہلے نیچے سے پیسے بھیجنے والا پیج کھول لیں۔",
-    "pay_bill": "پہلے بل پے کرنے والے پیج پر چلے جائیں۔",
-    "qr_pay": "پہلے اسکین اور پے والا پیج کھول لیں۔",
-    "request_certificate": "پہلے سرٹیفکیٹ والے پیج پر جائیں۔",
-    "request_cheque_book": "پہلے چیک بک والے پیج پر جائیں۔",
-    "stop_cheque": "پہلے چیک بک والے پیج پر جائیں۔",
-    "manage_card": "پہلے کارڈز والے پیج پر چلے جائیں۔",
+    "en": {
+        "send_money": "First, tap on 'Send Money' below to open the transfer screen.",
+        "pay_bill": "First, navigate to 'Bill Payments' from the menu.",
+        "qr_pay": "First, open the QR Scan and Pay page.",
+        "request_certificate": "First, go to the Certificates page.",
+        "request_cheque_book": "First, go to the Cheque Book management page.",
+        "stop_cheque": "First, open the Cheque Book page to stop a cheque.",
+        "manage_card": "First, open the Cards tab to manage your cards.",
+    },
+    "ur": {
+        "send_money": "پہلے نیچے سے پیسے بھیجنے والا پیج کھول لیں۔",
+        "pay_bill": "پہلے بل پے کرنے والے پیج پر چلے جائیں۔",
+        "qr_pay": "پہلے اسکین اور پے والا پیج کھول لیں۔",
+        "request_certificate": "پہلے سرٹیفکیٹ والے پیج پر جائیں۔",
+        "request_cheque_book": "پہلے چیک بک والے پیج پر جائیں۔",
+        "stop_cheque": "پہلے چیک بک والے پیج پر جائیں۔",
+        "manage_card": "پہلے کارڈز والے پیج پر چلے جائیں۔",
+    }
 }
 
 # Keyword fallback for when Ollama is not running. Order matters: the first
@@ -155,90 +166,168 @@ FALLBACK_RULES = [
 NEXT_WORDS = {"next", "agla", "aage", "اگلا", "آگے", "phir", "अगला", "आगे"}
 
 SPEECH_REPLIES = {
-    "check_balance": "آپ کا بیلنس دکھا رہا ہوں",
-    "send_money": "پیسے بھیجنے کے لیے رہنمائی کر رہا ہوں",
-    "pay_bill": "بل ادا کرنے کے لیے رہنمائی کر رہا ہوں",
-    "check_transactions": "ٹرانزیکشنز دکھا رہا ہوں",
-    "view_cards": "کارڈز دکھا رہا ہوں",
-    "view_analytics": "خرچ کا تجزیہ دکھا رہا ہوں",
-    "find_branch": "قریبی برانچ دکھا رہا ہوں",
-    "view_notifications": "اطلاعات دکھا رہا ہوں",
-    "view_statements": "اکاؤنٹ سٹیٹمنٹ دکھا رہا ہوں",
-    "view_profile": "پروفائل دکھا رہا ہوں",
-    "qr_pay": "اسکین اور پے کے لیے رہنمائی کر رہا ہوں",
-    "request_certificate": "سرٹیفکیٹ کی درخواست کے لیے رہنمائی کر رہا ہوں",
-    "request_cheque_book": "چیک بک کی درخواست کے لیے رہنمائی کر رہا ہوں",
-    "stop_cheque": "چیک روکنے کے لیے رہنمائی کر رہا ہوں",
-    "manage_card": "کارڈ مینجمنٹ کے لیے رہنمائی کر رہا ہوں",
+    "en": {
+        "check_balance": "Showing your account balance",
+        "send_money": "Guiding you to transfer money",
+        "pay_bill": "Guiding you to pay your bill",
+        "check_transactions": "Showing recent transactions",
+        "view_cards": "Displaying your cards",
+        "view_analytics": "Showing your spending analytics",
+        "find_branch": "Showing nearest branches on map",
+        "view_notifications": "Opening notifications",
+        "view_statements": "Opening account statements",
+        "view_profile": "Opening profile settings",
+        "qr_pay": "Opening QR scan and pay",
+        "request_certificate": "Guiding certificate request",
+        "request_cheque_book": "Guiding cheque book request",
+        "stop_cheque": "Guiding stop cheque request",
+        "manage_card": "Opening card management",
+    },
+    "ur": {
+        "check_balance": "آپ کا بیلنس دکھا رہا ہوں",
+        "send_money": "پیسے بھیجنے کے لیے رہنمائی کر رہا ہوں",
+        "pay_bill": "بل ادا کرنے کے لیے رہنمائی کر رہا ہوں",
+        "check_transactions": "ٹرانزیکشنز دکھا رہا ہوں",
+        "view_cards": "کارڈز دکھا رہا ہوں",
+        "view_analytics": "خرچ کا تجزیہ دکھا رہا ہوں",
+        "find_branch": "قریبی برانچ دکھا رہا ہوں",
+        "view_notifications": "اطلاعات دکھا رہا ہوں",
+        "view_statements": "اکاؤنٹ سٹیٹمنٹ دکھا رہا ہوں",
+        "view_profile": "پروفائل دکھا رہا ہوں",
+        "qr_pay": "اسکین اور پے کے لیے رہنمائی کر رہا ہوں",
+        "request_certificate": "سرٹیفکیٹ کی درخواست کے لیے رہنمائی کر رہا ہوں",
+        "request_cheque_book": "چیک بک کی درخواست کے لیے رہنمائی کر رہا ہوں",
+        "stop_cheque": "چیک روکنے کے لیے رہنمائی کر رہا ہوں",
+        "manage_card": "کارڈ مینجمنٹ کے لیے رہنمائی کر رہا ہوں",
+    }
 }
 
 # Agent ids are letters, digits, dashes and underscores — matches the
 # regex used by the browser bridge. Used to validate click targets.
 SAFE_AGENT_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 
-# Step-by-step Urdu guidance spoken by the browser's Web Speech API during
-# guided multi-step flows (send money, pay bill). Each key is a specific
-# element id that appears as a step in GUIDED_STEPS.
+# Step-by-step bilingual guidance spoken during guided multi-step flows.
 FLOW_GUIDANCE = {
-    # --- send money ---
-    "sendmoney-recipient-select":
-        "پہلے جسے پیسے بھیجنے ہیں، اس کا نام چن لیں یا نیا شخص شامل کرنے کے لیے 'Add new' پر ٹیپ کریں۔",
-    "sendmoney-amount-input":
-        "اب جتنے پیسے بھیجنے ہیں وہ رقم لکھیں اور پھر 'Next' دبائیں۔",
-    "sendmoney-submit":
-        "اب ساری تفصیلات چیک کر کے 'Send' کا بٹن دبا دیں۔",
-    # --- pay bill ---
-    "paybill-biller-select":
-        "پہلے کے الیکٹرک، سوئی گیس، یا جو بھی بل ہے، وہ کمپنی سلیکٹ کر لیں۔",
-    "paybill-amount-input":
-        "اب اپنے بل کی رقم لکھ کر 'Next' دبائیں۔",
-    "paybill-submit":
-        "اب ساری تفصیلات دیکھ کر 'Pay' کا بٹن دبا دیں۔",
-    # --- qr pay ---
-    "qrpay-simulate-scan":
-        "اسکین کا بٹن دبائیں یا نیچے لسٹ سے دکاندار چن لیں۔",
-    "qrpay-amount-input":
-        "اب جتنی رقم ادا کرنی ہے وہ لکھ دیں۔",
-    "qrpay-confirm-approve":
-        "تفصیلات چیک کریں اور پیمنٹ کے لیے 'Pay' دبا دیں۔",
-    # --- certificate ---
-    "certificate-option-balance":
-        "پہلے سرٹیفکیٹ کی قسم چن لیں — بیلنس، ٹیکس، یا مینٹیننس۔",
-    "certificate-account-select":
-        "اب وہ اکاؤنٹ سلیکٹ کریں جس کا سرٹیفکیٹ چاہیے۔",
-    "certificate-submit":
-        "تفصیلات چیک کر کے درخواست جمع کروا دیں۔",
-    # --- cheque book request ---
-    "cheque-tab-request":
-        "پہلے 'Request book' والے ٹیب پر جائیں۔",
-    "cheque-account-select":
-        "اب اپنا اکاؤنٹ منتخب کریں۔",
-    "cheque-leaves-select":
-        "اب چیک کے پتوں کی تعداد چن لیں — ۲۵، ۵۰، یا ۱۰۰۔",
-    "cheque-request-submit":
-        "درخواست جمع کروا دیں، چیک بک چند دنوں میں تیار ہو جائے گی۔",
-    # --- stop cheque ---
-    "cheque-tab-stop":
-        "چیک روکنے والے ٹیب پر کلک کریں۔",
-    "cheque-stop-number-input":
-        "اب جو چیک روکنا ہے اس کا نمبر لکھیں۔",
-    "cheque-stop-submit":
-        "چیک روکنے کی درخواست سبمٹ کر دیں۔",
-    # --- card management ---
-    "cards-open-card-debit-visa":
-        "اپنے کارڈ پر کلک کریں۔",
-    "cards-freeze-toggle":
-        "یہاں سے کارڈ کو فریز یا ان فریز کر لیں۔",
-    "cards-view-pin":
-        "اپنا پن دیکھنے کے لیے 'Reveal' دبائیں۔",
-    "cards-block-card":
-        "کارڈ مکمل طور پر بلاک کرنے کے لیے یہاں دبائیں۔",
+    "en": {
+        # --- send money ---
+        "sendmoney-recipient-select":
+            "First, select a recipient from your list, or tap 'Add new' to send money to someone new.",
+        "sendmoney-amount-input":
+            "Now enter the amount you wish to transfer and click Next.",
+        "sendmoney-submit":
+            "Review your transaction details and tap Send to complete the transfer.",
+        # --- pay bill ---
+        "paybill-biller-select":
+            "First, select your utility company or service provider from the list.",
+        "paybill-amount-input":
+            "Now enter your bill amount and click Next.",
+        "paybill-submit":
+            "Review the bill summary and tap Pay to finish payment.",
+        # --- qr pay ---
+        "qrpay-simulate-scan":
+            "Tap the scan button or choose a merchant from the list below.",
+        "qrpay-amount-input":
+            "Now enter the payment amount.",
+        "qrpay-confirm-approve":
+            "Review payment details and tap Pay to confirm.",
+        # --- certificate ---
+        "certificate-option-balance":
+            "Select your certificate type — balance, tax, or maintenance.",
+        "certificate-account-select":
+            "Now select the account for which you need this certificate.",
+        "certificate-submit":
+            "Verify the information and tap Submit.",
+        # --- cheque book request ---
+        "cheque-tab-request":
+            "Tap on the Request Cheque Book tab.",
+        "cheque-account-select":
+            "Select your bank account.",
+        "cheque-leaves-select":
+            "Choose the number of leaves — 25, 50, or 100.",
+        "cheque-request-submit":
+            "Tap Submit. Your cheque book will be delivered shortly.",
+        # --- stop cheque ---
+        "cheque-tab-stop":
+            "Click on the Stop Cheque tab.",
+        "cheque-stop-number-input":
+            "Enter the cheque number you want to stop.",
+        "cheque-stop-submit":
+            "Submit to issue the stop payment order.",
+        # --- card management ---
+        "cards-open-card-debit-visa":
+            "Click on your active card to manage it.",
+        "cards-freeze-toggle":
+            "You can freeze or unfreeze your card right here.",
+        "cards-view-pin":
+            "Tap Reveal to view your card PIN.",
+        "cards-block-card":
+            "Tap here if you need to permanently block your card.",
+    },
+    "ur": {
+        # --- send money ---
+        "sendmoney-recipient-select":
+            "پہلے جسے پیسے بھیجنے ہیں، اس کا نام چن لیں یا نیا شخص شامل کرنے کے لیے 'Add new' پر ٹیپ کریں۔",
+        "sendmoney-amount-input":
+            "اب جتنے پیسے بھیجنے ہیں وہ رقم لکھیں اور پھر 'Next' دبائیں۔",
+        "sendmoney-submit":
+            "اب ساری تفصیلات چیک کر کے 'Send' کا بٹن دبا دیں۔",
+        # --- pay bill ---
+        "paybill-biller-select":
+            "پہلے کے الیکٹرک، سوئی گیس، یا جو بھی بل ہے، وہ کمپنی سلیکٹ کر لیں۔",
+        "paybill-amount-input":
+            "اب اپنے بل کی رقم لکھ کر 'Next' دبائیں۔",
+        "paybill-submit":
+            "اب ساری تفصیلات دیکھ کر 'Pay' کا بٹن دبا دیں۔",
+        # --- qr pay ---
+        "qrpay-simulate-scan":
+            "اسکین کا بٹن دبائیں یا نیچے لسٹ سے دکاندار چن لیں۔",
+        "qrpay-amount-input":
+            "اب جتنی رقم ادا کرنی ہے وہ لکھ دیں۔",
+        "qrpay-confirm-approve":
+            "تفصیلات چیک کریں اور پیمنٹ کے لیے 'Pay' دبا دیں۔",
+        # --- certificate ---
+        "certificate-option-balance":
+            "پہلے سرٹیفکیٹ کی قسم چن لیں — بیلنس، ٹیکس، یا مینٹیننس۔",
+        "certificate-account-select":
+            "اب وہ اکاؤنٹ سلیکٹ کریں جس کا سرٹیفکیٹ چاہیے۔",
+        "certificate-submit":
+            "تفصیلات چیک کر کے درخواست جمع کروا دیں۔",
+        # --- cheque book request ---
+        "cheque-tab-request":
+            "پہلے 'Request book' والے ٹیب پر جائیں۔",
+        "cheque-account-select":
+            "اب اپنا اکاؤنٹ منتخب کریں۔",
+        "cheque-leaves-select":
+            "اب چیک کے پتوں کی تعداد چن لیں — ۲۵، ۵۰، یا ۱۰۰۔",
+        "cheque-request-submit":
+            "درخواست جمع کروا دیں، چیک بک چند دنوں میں تیار ہو جائے گی۔",
+        # --- stop cheque ---
+        "cheque-tab-stop":
+            "چیک روکنے والے ٹیب پر کلک کریں۔",
+        "cheque-stop-number-input":
+            "اب جو چیک روکنا ہے اس کا نمبر لکھیں۔",
+        "cheque-stop-submit":
+            "چیک روکنے کی درخواست سبمٹ کر دیں۔",
+        # --- card management ---
+        "cards-open-card-debit-visa":
+            "اپنے کارڈ پر کلک کریں۔",
+        "cards-freeze-toggle":
+            "یہاں سے کارڈ کو فریز یا ان فریز کر لیں۔",
+        "cards-view-pin":
+            "اپنا پن دیکھنے کے لیے 'Reveal' دبائیں۔",
+        "cards-block-card":
+            "کارڈ مکمل طور پر بلاک کرنے کے لیے یہاں دبائیں۔",
+    }
 }
 
-# Guided multi-step flows: saying "next" on the same screen walks
-# the user through the form one glowing element at a time.
+# Guided multi-step flows: supports both Web (e.g. sendmoney-screen) and Mobile (SendMoney).
 GUIDED_STEPS = {
     ("send_money", "sendmoney-screen"): [
+        "sendmoney-recipient-select",
+        "sendmoney-amount-input",
+        "sendmoney-submit",
+    ],
+    ("send_money", "SendMoney"): [
         "sendmoney-recipient-select",
         "sendmoney-amount-input",
         "sendmoney-submit",
@@ -248,11 +337,17 @@ GUIDED_STEPS = {
         "paybill-amount-input",
         "paybill-submit",
     ],
+    ("pay_bill", "BillPayments"): [
+        "paybill-biller-select",
+        "paybill-amount-input",
+        "paybill-submit",
+    ],
     ("qr_pay", "qr-pay-screen"): [
         "qrpay-simulate-scan",
     ],
-    # The confirm step is a separate broadcast screen (internal state change,
-    # not a route change) — its own step list starts fresh when it opens.
+    ("qr_pay", "QR"): [
+        "qrpay-simulate-scan",
+    ],
     ("qr_pay", "qrpay-confirm-screen"): [
         "qrpay-amount-input",
         "qrpay-confirm-approve",
@@ -276,6 +371,9 @@ GUIDED_STEPS = {
     ("manage_card", "cards-screen"): [
         "cards-open-card-debit-visa",
     ],
+    ("manage_card", "CardManagement"): [
+        "cards-open-card-debit-visa",
+    ],
     ("manage_card", "card-detail-screen"): [
         "cards-freeze-toggle",
         "cards-view-pin",
@@ -283,24 +381,36 @@ GUIDED_STEPS = {
     ],
 }
 
-# Screens that trigger auto-guidance when the user navigates to them with an
-# active flow intent. The handler auto-highlights step 1 on these screens.
+# Screens that trigger auto-guidance when navigated to with an active flow intent.
 FORM_SCREENS = {
-    "sendmoney-screen", "paybill-screen", "qr-pay-screen", "qrpay-confirm-screen",
+    "sendmoney-screen", "SendMoney",
+    "paybill-screen", "BillPayments",
+    "qr-pay-screen", "QR", "qrpay-confirm-screen",
     "certificates-screen", "cheque-book-screen",
-    "cards-screen", "card-detail-screen",
+    "cards-screen", "CardManagement", "card-detail-screen",
 }
 
-# Success screens that end a guided flow and reset the last intent. qr-pay,
-# certificates and cheque-book swap to their success view via internal state —
-# the pages broadcast these screen ids themselves.
+# Mapping screens to default intent for smart continuation ("what do I do next?")
+SCREEN_TO_INTENT = {
+    "sendmoney-screen": "send_money",
+    "SendMoney": "send_money",
+    "paybill-screen": "pay_bill",
+    "BillPayments": "pay_bill",
+    "qr-pay-screen": "qr_pay",
+    "QR": "qr_pay",
+    "certificates-screen": "request_certificate",
+    "cheque-book-screen": "request_cheque_book",
+    "cards-screen": "manage_card",
+    "CardManagement": "manage_card",
+    "card-detail-screen": "manage_card",
+}
+
+# Success screens that end a guided flow
 FLOW_END_SCREENS = {
     "sendmoney-success-screen", "paybill-success-screen",
     "qrpay-success-screen", "certificate-success-screen", "cheque-success-screen",
 }
 
-# When a guided flow reaches its success screen, highlight the "Back to home"
-# button and speak a completion message — a natural end for the demo.
 FLOW_END_HOME = {
     "sendmoney-success-screen": ["sendmoney-success-home"],
     "paybill-success-screen": ["paybill-success-home"],
@@ -308,16 +418,24 @@ FLOW_END_HOME = {
     "certificate-success-screen": ["certificate-success-home"],
     "cheque-success-screen": ["cheque-success-home"],
 }
+
 FLOW_END_GUIDANCE = {
-    "sendmoney-success-screen": "پیسے کامیابی سے بھیج دیے گئے!",
-    "paybill-success-screen": "بل کامیابی سے ادا ہو گیا!",
-    "qrpay-success-screen": "ادائیگی کامیابی سے مکمل ہو گئی!",
-    "certificate-success-screen": "آپ کی درخواست موصول ہو گئی!",
-    "cheque-success-screen": "درخواست کامیابی سے جمع ہو گئی!",
+    "en": {
+        "sendmoney-success-screen": "Money has been sent successfully!",
+        "paybill-success-screen": "Bill payment was completed successfully!",
+        "qrpay-success-screen": "Payment was completed successfully!",
+        "certificate-success-screen": "Your certificate request has been received!",
+        "cheque-success-screen": "Cheque book request submitted successfully!",
+    },
+    "ur": {
+        "sendmoney-success-screen": "پیسے کامیابی سے بھیج دیے گئے!",
+        "paybill-success-screen": "بل کامیابی سے ادا ہو گیا!",
+        "qrpay-success-screen": "ادائیگی کامیابی سے مکمل ہو گئی!",
+        "certificate-success-screen": "آپ کی درخواست موصول ہو گئی!",
+        "cheque-success-screen": "درخواست کامیابی سے جمع ہو گئی!",
+    }
 }
 
-# Intents that start guided flows — kept alive across screen changes so the
-# handler can auto-guide the form screen when the user navigates to it.
 FLOW_INTENTS = {
     "send_money", "pay_bill", "qr_pay",
     "request_certificate", "request_cheque_book", "stop_cheque",
@@ -578,6 +696,78 @@ def cancel_flow_advance():
         _flow_timer = None
 
 
+def resolve_guidance(guidance_dict: dict, key: str, lang: str = "en") -> str:
+    """Safely get guidance string from bilingual or flat dictionary."""
+    if not key or not guidance_dict:
+        return ""
+    # Flat dictionary fallback
+    if key in guidance_dict and isinstance(guidance_dict[key], str):
+        return guidance_dict[key]
+    lang_key = "ur" if lang == "ur" else "en"
+    lang_map = guidance_dict.get(lang_key, {})
+    if key in lang_map:
+        return lang_map[key]
+    # Fallback to alternate language
+    alt_key = "en" if lang_key == "ur" else "ur"
+    return guidance_dict.get(alt_key, {}).get(key, "")
+
+
+def detect_language(text: str, default: str = "en") -> str:
+    """Detect language (en or ur) from user text robustly."""
+    if not text:
+        return default
+    # Check for Urdu / Arabic script
+    if any("\u0600" <= ch <= "\u06FF" for ch in text):
+        return "ur"
+    # Check for Devanagari script
+    if any("\u0900" <= ch <= "\u097F" for ch in text):
+        return "ur"
+
+    tokens = set(re.findall(r"\b[a-zA-Z]+\b", text.lower()))
+    roman_urdu = {
+        "mera", "meri", "mere", "apna", "apni", "karo", "karna", "karein", "kare",
+        "bhejo", "bhejna", "paise", "paisa", "rupay", "kitna", "kitne", "hai",
+        "hain", "tha", "thi", "kya", "kyun", "kaise", "ab", "aage", "agla",
+        "batao", "dikhao", "sunao", "bijli", "zarurat", "karun", "chahiye", "zara"
+    }
+    if tokens & roman_urdu:
+        return "ur"
+
+    english_words = {
+        "what", "do", "i", "next", "how", "send", "money", "check", "balance",
+        "bill", "pay", "please", "can", "you", "help", "where", "should", "now",
+        "proceed", "continue", "card", "cards", "transfer", "statement", "profile",
+        "to", "the", "a", "an", "is", "are", "my", "account"
+    }
+    if tokens & english_words or len(tokens) >= 2:
+        return "en"
+
+    return default
+
+
+def is_next_query(text: str) -> bool:
+    """Check if utterance asks what to do next or how to proceed."""
+    norm = _normalize_command(text)
+    if norm in NEXT_WORDS:
+        return True
+    pattern = re.compile(
+        r"\b(next|agla|aage|اگلا|آگے|phir|अगला|आगे|"
+        r"what\s+(do\s+i|should\s+i|to|can\s+i)\s+do(\s+next|\s+now)?|"
+        r"what\s+is\s+(the\s+)?next(\s+step)?|"
+        r"what\s+next|"
+        r"what\s+now|"
+        r"where\s+(do\s+i|should\s+i|to)\s+(click|tap|press|go)|"
+        r"how\s+(do\s+i|to)\s+(proceed|continue|send|pay)|"
+        r"ab\s+kya|"
+        r"aage\s+kya|"
+        r"kya\s+karun|"
+        r"help\s+me|"
+        r"guide\s+me)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
 async def _auto_advance_flow():
     """Timer callback — advance the guided flow automatically with neural voice guidance."""
     global _flow_timer
@@ -589,11 +779,12 @@ async def _auto_advance_flow():
     target = decide_target(last_intent, current_screen)
     if not target:
         return
-    guidance = FLOW_GUIDANCE.get(target[0])
+    lang = _stt_language or "en"
+    guidance = resolve_guidance(FLOW_GUIDANCE, target[0], lang)
     audio_bytes = None
     if guidance:
         try:
-            audio_bytes = await synthesize_speech(guidance, language=_stt_language)
+            audio_bytes = await synthesize_speech(guidance, language=lang)
         except Exception as e:
             print(f"[tts] Auto-advance synthesis note: {e}")
     await send_highlight(target, flow_guidance=guidance, audio_bytes=audio_bytes)
@@ -602,26 +793,48 @@ async def _auto_advance_flow():
 
 
 async def handle_utterance(text: str):
-    global last_intent
+    global last_intent, _stt_language
     utterance = text.strip()
     if not utterance:
         return
 
-    # "next" advances the guided flow without re-classifying.
-    if _normalize_command(utterance) in NEXT_WORDS and last_intent:
-        intent_result = {"intent": last_intent, "confidence": "high (next)", "language": _stt_language}
+    detected_lang = detect_language(utterance, default=_stt_language or "en")
+    is_next = is_next_query(utterance)
+
+    if is_next:
+        # User asking what to do next — recover flow context even if last_intent was lost
+        active_intent = last_intent or SCREEN_TO_INTENT.get(current_screen) or "send_money"
+        last_intent = active_intent
+        intent_result = {
+            "intent": active_intent,
+            "confidence": "high (next)",
+            "language": detected_lang,
+            "reply": "Here is the next step." if detected_lang == "en" else "یہ اگلا قدم ہے۔"
+        }
     else:
         intent_result = classify(utterance)
-        if intent_result["intent"] != "unknown":
+        # Use detected language if classifier defaulted to urdu or didn't set it
+        if detected_lang == "en" and intent_result.get("language") != "en":
+            intent_result["language"] = "en"
+        detected_lang = intent_result.get("language", detected_lang)
+
+        if intent_result["intent"] == "next_step":
+            active_intent = last_intent or SCREEN_TO_INTENT.get(current_screen) or "send_money"
+            last_intent = active_intent
+            intent_result["intent"] = active_intent
+        elif intent_result["intent"] != "unknown":
             last_intent = intent_result["intent"]
 
     intent = intent_result["intent"]
     print(f"[intent] {json.dumps(intent_result, ensure_ascii=False)}")
 
     if intent == "unknown":
-        reply = intent_result.get("reply", "معذرت، میں آپ کی بات سمجھ نہیں سکا۔ کیا آپ رقم بھیجنا یا بیلنس دیکھنا چاہتے ہیں؟")
+        if detected_lang == "en":
+            reply = intent_result.get("reply") or "I'm sorry, I didn't quite catch that. Would you like to check your balance, transfer funds, or pay a bill?"
+        else:
+            reply = intent_result.get("reply") or "معذرت، میں آپ کی بات سمجھ نہیں سکا۔ کیا آپ رقم بھیجنا یا بیلنس دیکھنا چاہتے ہیں؟"
         try:
-            audio_bytes = await synthesize_speech(reply, language=intent_result.get("language", "ur"))
+            audio_bytes = await synthesize_speech(reply, language=detected_lang)
             await send_highlight([], flow_guidance=reply, audio_bytes=audio_bytes)
         except Exception:
             pass
@@ -629,18 +842,17 @@ async def handle_utterance(text: str):
         return
 
     if not current_screen:
-        print("[agent] no browser connected yet — I don't know which screen you're on")
+        print("[agent] no browser or mobile app connected yet")
         return
 
     target = decide_target(intent, current_screen)
     if target:
-        guidance = FLOW_GUIDANCE.get(target[0])
+        guidance = resolve_guidance(FLOW_GUIDANCE, target[0], detected_lang)
         if not guidance and intent in NAV_GUIDANCE and (intent, current_screen) not in GUIDED_STEPS:
-            guidance = NAV_GUIDANCE[intent]
+            guidance = resolve_guidance(NAV_GUIDANCE, intent, detected_lang)
 
-        # Use contextual conversational reply or step guidance
         spoken_text = guidance or intent_result.get("reply", "")
-        lang = intent_result.get("language", _stt_language or "ur")
+        lang = detected_lang
 
         audio_bytes = None
         if spoken_text:
@@ -665,7 +877,7 @@ async def handle_utterance(text: str):
 async def handler(websocket):
     global current_screen, last_intent, _stt_language
     connected_clients.add(websocket)
-    print(f"[+] Browser connected. Total: {len(connected_clients)}")
+    print(f"[+] Client connected. Total: {len(connected_clients)}")
     try:
         async for message in websocket:
             data = json.loads(message)
@@ -689,14 +901,11 @@ async def handler(websocket):
                 last_highlighted = None
                 print(f"[screen] -> {current_screen}")
 
-                # End the guided flow when the user reaches a success screen —
-                # highlight the "Back to home" button and speak a completion
-                # message so the demo has a natural finish.
                 # End the guided flow when the user reaches a success screen
                 if current_screen in FLOW_END_SCREENS:
                     if last_intent:
                         home_target = FLOW_END_HOME.get(current_screen)
-                        end_guidance = FLOW_END_GUIDANCE.get(current_screen)
+                        end_guidance = resolve_guidance(FLOW_END_GUIDANCE, current_screen, _stt_language)
                         if home_target:
                             audio_bytes = None
                             if end_guidance:
@@ -714,7 +923,7 @@ async def handler(websocket):
                         and (last_intent, current_screen) in GUIDED_STEPS):
                     target = decide_target(last_intent, current_screen)
                     if target:
-                        guidance = FLOW_GUIDANCE.get(target[0])
+                        guidance = resolve_guidance(FLOW_GUIDANCE, target[0], _stt_language)
                         audio_bytes = None
                         if guidance:
                             try:
@@ -728,7 +937,7 @@ async def handler(websocket):
         pass
     finally:
         connected_clients.discard(websocket)
-        print(f"[-] Browser disconnected. Total: {len(connected_clients)}")
+        print(f"[-] Client disconnected. Total: {len(connected_clients)}")
 
 
 HELP_TEXT = """Commands:
