@@ -8,6 +8,12 @@ INTENT = [
     "view_statements", "view_profile", "qr_pay",
     "request_certificate", "request_cheque_book", "stop_cheque", "manage_card",
     "next_step",
+    "recipient_guidance",
+    "amount_guidance",
+    "biller_guidance_gas",
+    "biller_guidance_electricity",
+    "biller_guidance_internet",
+    "autonomous_action_refusal",
     "unknown",
 ]
 
@@ -30,6 +36,12 @@ POLITE_REPLIES = {
         "stop_cheque": "چیک کی پیمنٹ روکنے کے لیے اپنا چیک نمبر یہاں لکھ دیں۔",
         "manage_card": "کارڈ فریز کرنے، پن دیکھنے یا بلاک کرنے کی سیٹنگز سامنے ہیں۔",
         "next_step": "اگلا قدم اٹھانے کے لیے، میں نے اگلا آپشن اسکرین پر ہائی لائٹ کر دیا ہے۔",
+        "recipient_guidance": "یہاں سے آپ اپنا وصول کنندہ چن سکتے ہیں۔ اس باکس پر ٹیپ کریں اور اپنی لسٹ میں سے بندہ سلیکٹ کر لیں۔",
+        "amount_guidance": "یہاں رقم والے خانے میں جتنی رقم ادا کرنی ہے وہ لکھیں اور پھر نیکسٹ دبائیں۔",
+        "biller_guidance_gas": "گیس کے بل کے لیے، سوئی سدرن گیس کمپنی لسٹ میں دوسرے نمبر پر موجود ہے، نہ کہ پہلے یا تیسرے پر۔ اس پر ٹیپ کریں۔",
+        "biller_guidance_electricity": "بجلی کے بل کے لیے، کے الیکٹرک لسٹ میں پہلے نمبر پر ہے۔ اس پر ٹیپ کریں۔",
+        "biller_guidance_internet": "انٹرنیٹ کے بل کے لیے، پی ٹی سی ایل براڈ بینڈ لسٹ میں تیسرے نمبر پر ہے۔ اس پر کلک کریں۔",
+        "autonomous_action_refusal": "آپ کے اکاؤنٹ کی سیکیورٹی کے لیے، مجھے خود ٹرانزیکشن کرنے یا آپ کی جگہ کلک کرنے کی اجازت نہیں ہے۔ میں آپ کی رہنمائی کر سکتا ہوں، برائے مہربانی اسکرین پر ہائی لائٹ کیے گئے بٹن کو خود دبائیں۔",
         "unknown": "معاف کیجیے گا، میں سمجھ نہیں پایا۔ کیا آپ پیسے بھیجنا چاہتے ہیں یا بیلنس چیک کرنا چاہتے ہیں؟",
     },
     "en": {
@@ -49,6 +61,12 @@ POLITE_REPLIES = {
         "stop_cheque": "Please enter your cheque number to issue a stop payment request.",
         "manage_card": "Here are your card controls to freeze your card, view PIN, or set limits.",
         "next_step": "Here is the next step. Please follow the highlighted area on your screen.",
+        "recipient_guidance": "Here is where you choose your recipient. Tap on this field to select a saved contact or tap 'Add new'.",
+        "amount_guidance": "Enter the amount you wish to transfer right here in the amount field, then tap Next.",
+        "biller_guidance_gas": "For your gas bill, Sui Southern Gas Company is the second option in the list, not the first or third. Tap it to proceed.",
+        "biller_guidance_electricity": "For electricity, K-Electric is the first option on the list. Tap it to pay your electricity bill.",
+        "biller_guidance_internet": "For your internet bill, PTCL Broadband is the third option in the list. Tap it to pay.",
+        "autonomous_action_refusal": "For your security and privacy, I cannot execute transactions or enter information on your behalf. I am your guide — please tap the highlighted button to confirm it yourself.",
         "unknown": "I'm sorry, I didn't quite catch that. Would you like to check your balance, pay a bill, or transfer funds?",
     }
 }
@@ -69,11 +87,16 @@ Output format (strictly valid JSON only, no markdown, no explanation):
 }}
 
 Rules:
-- CRITICAL FOR NEXT / CONTINUATION: If the user asks what to do next ('what do I do next?', 'what should I do now?', 'what's the next step?', 'where do I click?', 'how do I proceed?', 'ab kya karna hai?', 'aage kya?', 'kya karun?'), classify intent as 'next_step'.
+- NEXT / CONTINUATION: If user asks what to do next ('what do I do next?', 'what should I do now?', 'where do I click?', 'ab kya karna hai?'), classify as 'next_step'.
+- RECIPIENT HELP: If user asks where or how to choose/find recipient ('how should I choose recipient?', 'where can I find recipient?', 'banda kahan hai?'), classify as 'recipient_guidance'.
+- AMOUNT HELP: If user asks where to enter amount ('where do I enter amount?', 'amount kahan likhoon?'), classify as 'amount_guidance'.
+- SPECIFIC BILLERS:
+  * Gas bill / Sui Gas / SSGC: classify as 'biller_guidance_gas'.
+  * Electricity / K-Electric / Bijli: classify as 'biller_guidance_electricity'.
+  * Internet / PTCL / Broadband: classify as 'biller_guidance_internet'.
+- AUTONOMOUS ACTION REFUSAL: If user asks the AI to execute an action for them ('send it for me', 'do this for me', 'pay this for me', 'click the button for me', 'mere liye transfer kar do', 'khud kar do'), classify as 'autonomous_action_refusal'. Explain politely that for security reasons, the assistant cannot execute transactions directly.
 - Language Mirroring: If the input is in English, reply in friendly English and set "language": "en". If the input is Urdu or Roman Urdu, reply in Urdu and set "language": "ur".
-- Be robust to casual phrasing, slang, and code-switching (e.g. 'mera balance kitna hai', 'send 5000 to Ali').
 - Keep sentences short, natural, and friendly.
-- Only if completely unclear or unrelated to banking features, set intent to 'unknown'.
 """
 
 

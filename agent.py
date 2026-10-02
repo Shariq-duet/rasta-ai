@@ -95,13 +95,33 @@ NAV_GUIDANCE = {
     }
 }
 
-# Keyword fallback for when Ollama is not running. Order matters: the first
-# matching row wins, so specific action intents (freeze my card, balance
-# certificate, stop cheque) come BEFORE generic view intents — otherwise
-# "card" in view_cards would swallow "freeze my card". Covers English,
-# Roman Urdu, Urdu script, AND Hindi (Devanagari) script — Hindi is fused
-# into Urdu since Whisper often detects spoken Urdu as Hindi.
 FALLBACK_RULES = [
+    ("autonomous_action_refusal", [
+        "for me", "do this", "do that", "send it for me", "pay it for me", "transfer it for me",
+        "click it", "enter my", "enter it", "submit it", "mere liye", "khud kar",
+        "khud bhej", "khud pay", "apne hath se", "can you do this", "can you do that",
+    ]),
+    ("biller_guidance_gas", [
+        "sui gas", "ssgc", "so you guys", "sui southern", "gas bill", "guest bill", "gas",
+        "سوئی گیس", "گیس کا بل", "گیس",
+    ]),
+    ("biller_guidance_electricity", [
+        "k-electric", "kelectric", "electric bill", "bijli ka bill", "electricity bill",
+        "electricity", "bijli", "بجلی", "کے الیکٹرک",
+    ]),
+    ("biller_guidance_internet", [
+        "ptcl", "broadband", "internet bill", "wifi bill", "internet",
+        "پی ٹی سی ایل", "انٹرنیٹ کا بل", "انٹرنیٹ",
+    ]),
+    ("recipient_guidance", [
+        "choose my recipient", "find my recipient", "pick recipient", "choose recipient",
+        "select recipient", "where is recipient", "how to choose recipient", "how should i choose",
+        "who am i sending", "banda kahan", "recipient kahan", "وصول کنندہ", "recipient",
+    ]),
+    ("amount_guidance", [
+        "enter amount", "where is amount", "where to enter amount", "how much amount",
+        "put amount", "amount kahan", "paise kahan likhoon", "رقم کہاں",
+    ]),
     ("stop_cheque", [
         "stop cheque", "stop check", "چیک روک", "चेक रोक",
         "cancel cheque", "چیک منسوخ",
@@ -122,8 +142,7 @@ FALLBACK_RULES = [
     ]),
     ("pay_bill", [
         "bill", "بل", "बिल",
-        "bijli", "بجلی", "बिजली",
-        "گیس", "utility", "ادا", "भुगतान",
+        "utility", "ادا", "भुगतान",
     ]),
     ("send_money", [
         "send", "bhej", "بھیج", "भेज",
@@ -182,6 +201,12 @@ SPEECH_REPLIES = {
         "request_cheque_book": "Guiding cheque book request",
         "stop_cheque": "Guiding stop cheque request",
         "manage_card": "Opening card management",
+        "recipient_guidance": "Here is where you choose your recipient. Tap on this field to select a saved contact or tap 'Add new'.",
+        "amount_guidance": "Enter the amount you wish to transfer right here in the amount field, then tap Next.",
+        "biller_guidance_gas": "For your gas bill, Sui Southern Gas Company is the second option in the list, not the first or third. Tap it to proceed.",
+        "biller_guidance_electricity": "For electricity, K-Electric is the first option on the list. Tap it to pay your electricity bill.",
+        "biller_guidance_internet": "For your internet bill, PTCL Broadband is the third option in the list. Tap it to pay.",
+        "autonomous_action_refusal": "For your security and privacy, I cannot execute transactions or enter information on your behalf. I am your guide — please tap the highlighted button to confirm it yourself.",
     },
     "ur": {
         "check_balance": "آپ کا بیلنس دکھا رہا ہوں",
@@ -199,6 +224,12 @@ SPEECH_REPLIES = {
         "request_cheque_book": "چیک بک کی درخواست کے لیے رہنمائی کر رہا ہوں",
         "stop_cheque": "چیک روکنے کے لیے رہنمائی کر رہا ہوں",
         "manage_card": "کارڈ مینجمنٹ کے لیے رہنمائی کر رہا ہوں",
+        "recipient_guidance": "یہاں سے آپ اپنا وصول کنندہ چن سکتے ہیں۔ اس باکس پر ٹیپ کریں اور اپنی لسٹ میں سے بندہ سلیکٹ کر لیں۔",
+        "amount_guidance": "یہاں رقم والے خانے میں جتنی رقم ادا کرنی ہے وہ لکھیں اور پھر نیکسٹ دبائیں۔",
+        "biller_guidance_gas": "گیس کے بل کے لیے، سوئی سدرن گیس کمپنی لسٹ میں دوسرے نمبر پر موجود ہے، نہ کہ پہلے یا تیسرے پر۔ اس پر ٹیپ کریں۔",
+        "biller_guidance_electricity": "بجلی کے بل کے لیے، کے الیکٹرک لسٹ میں پہلے نمبر پر ہے۔ اس پر ٹیپ کریں۔",
+        "biller_guidance_internet": "انٹرنیٹ کے بل کے لیے، پی ٹی سی ایل براڈ بینڈ لسٹ میں تیسرے نمبر پر ہے۔ اس پر کلک کریں۔",
+        "autonomous_action_refusal": "آپ کے اکاؤنٹ کی سیکیورٹی کے لیے، مجھے خود ٹرانزیکشن کرنے یا آپ کی جگہ کلک کرنے کی اجازت نہیں ہے۔ میں آپ کی رہنمائی کر سکتا ہوں، برائے مہربانی اسکرین پر ہائی لائٹ کیے گئے بٹن کو خود دبائیں۔",
     }
 }
 
@@ -253,6 +284,13 @@ FLOW_GUIDANCE = {
             "Enter the cheque number you want to stop.",
         "cheque-stop-submit":
             "Submit to issue the stop payment order.",
+        # --- specific billers ---
+        "paybill-biller-ssgc":
+            "For your gas bill, Sui Southern Gas Company is the second option in the list, not the first or third. Tap it to proceed.",
+        "paybill-biller-k-electric":
+            "For electricity, K-Electric is the first option on the list. Tap it to pay your electricity bill.",
+        "paybill-biller-ptcl":
+            "For your internet bill, PTCL Broadband is the third option in the list. Tap it to pay.",
         # --- card management ---
         "cards-open-card-debit-visa":
             "Click on your active card to manage it.",
@@ -278,6 +316,13 @@ FLOW_GUIDANCE = {
             "اب اپنے بل کی رقم لکھ کر 'Next' دبائیں۔",
         "paybill-submit":
             "اب ساری تفصیلات دیکھ کر 'Pay' کا بٹن دبا دیں۔",
+        # --- specific billers ---
+        "paybill-biller-ssgc":
+            "گیس کے بل کے لیے، سوئی سدرن گیس کمپنی لسٹ میں دوسرے نمبر پر موجود ہے، نہ کہ پہلے یا تیسرے پر۔ اس پر ٹیپ کریں۔",
+        "paybill-biller-k-electric":
+            "بجلی کے بل کے لیے، کے الیکٹرک لسٹ میں پہلے نمبر پر ہے۔ اس پر ٹیپ کریں۔",
+        "paybill-biller-ptcl":
+            "انٹرنیٹ کے بل کے لیے، پی ٹی سی ایل براڈ بینڈ لسٹ میں تیسرے نمبر پر ہے۔ اس پر کلک کریں۔",
         # --- qr pay ---
         "qrpay-simulate-scan":
             "اسکین کا بٹن دبائیں یا نیچے لسٹ سے دکاندار چن لیں۔",
@@ -568,6 +613,36 @@ def decide_target(intent: str, screen: str):
         if screen == "card-detail-screen":
             return ["cards-freeze-toggle"]
         return NAV_CARDS
+    if intent == "recipient_guidance":
+        if screen in ("sendmoney-screen", "SendMoney"):
+            return ["sendmoney-recipient-select"]
+        return NAV_TRANSFER
+    if intent == "amount_guidance":
+        if screen in ("paybill-screen", "BillPayments"):
+            return ["paybill-amount-input"]
+        if screen in ("sendmoney-screen", "SendMoney"):
+            return ["sendmoney-amount-input"]
+        return NAV_TRANSFER
+    if intent == "biller_guidance_gas":
+        if screen in ("paybill-screen", "BillPayments"):
+            return ["paybill-biller-ssgc", "paybill-biller-select"]
+        return NAV_BILLS
+    if intent == "biller_guidance_electricity":
+        if screen in ("paybill-screen", "BillPayments"):
+            return ["paybill-biller-k-electric", "paybill-biller-select"]
+        return NAV_BILLS
+    if intent == "biller_guidance_internet":
+        if screen in ("paybill-screen", "BillPayments"):
+            return ["paybill-biller-ptcl", "paybill-biller-select"]
+        return NAV_BILLS
+    if intent == "autonomous_action_refusal":
+        if last_highlighted:
+            return [last_highlighted]
+        if screen in ("sendmoney-screen", "SendMoney"):
+            return ["sendmoney-submit", "sendmoney-recipient-select"]
+        if screen in ("paybill-screen", "BillPayments"):
+            return ["paybill-submit", "paybill-biller-select"]
+        return []
     return []
 
 
@@ -768,6 +843,78 @@ def is_next_query(text: str) -> bool:
     return bool(pattern.search(text))
 
 
+def is_refusal_query(text: str) -> bool:
+    """Check if user asks the agent to autonomously execute an action."""
+    pattern = re.compile(
+        r"\b(do\s+(this|it|that)\s+for\s+me|"
+        r"do\s+(this|that)|"
+        r"send\s+(it|money|this)?(\s+for\s+me)|"
+        r"pay\s+(it|this|bill)?(\s+for\s+me)|"
+        r"transfer\s+(it|this)?(\s+for\s+me)|"
+        r"click\s+(it|this|the\s+button)\s+(for\s+me)?|"
+        r"enter\s+(it|my|password)\s+(for\s+me)?|"
+        r"can\s+you\s+(pay|send|transfer|click|do|submit)\s+(it|this)?(\s+for\s+me)?|"
+        r"mere\s+liye\s+(kar|bhej|pay|transfer)|"
+        r"khud\s+(kar\s+do|bhej\s+do|pay\s+kar\s+do|transfer\s+kar\s+do)|"
+        r"apne\s+hath\s+se)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_recipient_query(text: str) -> bool:
+    """Check if user asks where or how to choose the recipient."""
+    pattern = re.compile(
+        r"\b(how\s+(should|can|do)\s+i\s+(choose|pick|find|select)\s+(my\s+)?recipient|"
+        r"where\s+(can|do)\s+i\s+find\s+(my\s+)?recipient|"
+        r"where\s+is\s+(the\s+|my\s+)?recipient|"
+        r"who\s+am\s+i\s+sending(\s+to)?|"
+        r"how\s+to\s+(choose|pick|find)\s+recipient|"
+        r"recipient\s+(kahan|kaise)|"
+        r"banda\s+(kahan|kaise|kisko))\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_biller_gas_query(text: str) -> bool:
+    """Check if user specifically asked for gas bill / Sui Gas / SSGC."""
+    pattern = re.compile(
+        r"\b(sui\s*gas|ssgc|so\s+you\s+guys|sui\s+southern|gas\s+bill|guest\s+bill|gas|سوئی\s*گیس|گیس)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_biller_electricity_query(text: str) -> bool:
+    """Check if user specifically asked for electricity bill / K-Electric."""
+    pattern = re.compile(
+        r"\b(k-?electric|kelectric|electricity|electric\s+bill|bijli|بجلی|کے\s*الیکٹرک)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_biller_internet_query(text: str) -> bool:
+    """Check if user specifically asked for internet / PTCL."""
+    pattern = re.compile(
+        r"\b(ptcl|broadband|internet|wifi|پی\s*ٹی\s*سی\s*ایل|انٹرنیٹ)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_amount_query(text: str) -> bool:
+    """Check if user is asking where to enter the amount."""
+    pattern = re.compile(
+        r"\b(where\s+(do\s+i|can\s+i)\s+(enter|put|write|type)\s+(the\s+)?amount|"
+        r"how\s+much\s+amount|how\s+to\s+enter\s+amount|"
+        r"amount\s+(kahan|kaise)|paise\s+kahan\s+likh)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
 async def _auto_advance_flow():
     """Timer callback — advance the guided flow automatically with neural voice guidance."""
     global _flow_timer
@@ -801,7 +948,59 @@ async def handle_utterance(text: str):
     detected_lang = detect_language(utterance, default=_stt_language or "en")
     is_next = is_next_query(utterance)
 
-    if is_next:
+    if is_refusal_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["autonomous_action_refusal"]
+        intent_result = {
+            "intent": "autonomous_action_refusal",
+            "confidence": "high (refusal)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    elif is_biller_gas_query(utterance) and (current_screen in ("paybill-screen", "BillPayments") or "bill" in utterance.lower()):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["biller_guidance_gas"]
+        intent_result = {
+            "intent": "biller_guidance_gas",
+            "confidence": "high (biller_gas)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = "pay_bill"
+    elif is_biller_electricity_query(utterance) and (current_screen in ("paybill-screen", "BillPayments") or "bill" in utterance.lower()):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["biller_guidance_electricity"]
+        intent_result = {
+            "intent": "biller_guidance_electricity",
+            "confidence": "high (biller_electricity)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = "pay_bill"
+    elif is_biller_internet_query(utterance) and (current_screen in ("paybill-screen", "BillPayments") or "bill" in utterance.lower()):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["biller_guidance_internet"]
+        intent_result = {
+            "intent": "biller_guidance_internet",
+            "confidence": "high (biller_internet)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = "pay_bill"
+    elif is_recipient_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["recipient_guidance"]
+        intent_result = {
+            "intent": "recipient_guidance",
+            "confidence": "high (recipient)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = "send_money"
+    elif is_amount_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["amount_guidance"]
+        intent_result = {
+            "intent": "amount_guidance",
+            "confidence": "high (amount)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    elif is_next:
         # User asking what to do next — recover flow context even if last_intent was lost
         active_intent = last_intent or SCREEN_TO_INTENT.get(current_screen) or "send_money"
         last_intent = active_intent
