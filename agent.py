@@ -179,10 +179,50 @@ FALLBACK_RULES = [
     ("view_profile", [
         "profile", "settings", "account", "پروفائل", "ترتیبات", "प्रोफ़ाइल", "सेटिंग्स",
     ]),
+    ("cancel_or_back", [
+        "cancel", "wapas", "back", "home", "exit", "chhoro", "ruk jao", "stop", "go back", "cancel this",
+        "منسوخ", "واپس", "روکو",
+    ]),
+    ("repeat_guidance", [
+        "repeat", "what did you say", "dobara", "phir se", "samajh nahi aayi", "kya bola", "say again",
+        "repeat that", "pardon", "دوبارہ", "پھر سے بولو",
+    ]),
+    ("greeting_and_about", [
+        "hello", "hi", "suno", "assalam", "assalam-o-alaikum", "who are you", "what can you do", "help", "madad",
+        "aap kya kar sakte", "kya features hain", "hey rasta", "سلام", "کون ہو", "مدد",
+    ]),
+    ("emergency_card_freeze", [
+        "lost my card", "card lost", "lost card", "stolen card", "card chori", "card gum", "block card",
+        "freeze card", "card block", "card freeze", "کارڈ گم", "کارڈ چوری", "کارڈ بلاک",
+    ]),
+    ("human_support_helpline", [
+        "helpline", "human agent", "talk to human", "representative", "customer service", "customer care",
+        "numainda", "rabta", "complaint", "call center", "ہیلپ لائن", "نمائندہ", "رابطہ",
+    ]),
+    ("polite_closing", [
+        "thank you", "thanks", "shukriya", "bye", "allah hafiz", "khuda hafiz", "goodbye",
+        "شکریہ", "اللہ حافظ", "خدا حافظ",
+    ]),
+    ("security_inquiry", [
+        "what is my pin", "my password", "can you see my pin", "is this safe", "is it secure",
+        "mera pin", "security", "پاس ورڈ", "پن",
+    ]),
+    ("out_of_domain", [
+        "weather", "order pizza", "order food", "book a flight", "cricket score", "tell me a joke",
+        "who is the prime minister", "موسم", "کھانا",
+    ]),
+    ("add_beneficiary_guidance", [
+        "add beneficiary", "new recipient", "naya payee", "new contact", "add new", "banda add",
+        "payee add", "نیا وصول کنندہ", "نیا بندہ",
+    ]),
 ]
 # Short spoken confirmations after each highlight. Urdu; keep them brief so the
 # agent feels responsive rather than chatty.
-NEXT_WORDS = {"next", "agla", "aage", "اگلا", "آگے", "phir", "अगला", "आगे"}
+NEXT_WORDS = {
+    "next", "agla", "aage", "اگلا", "آگے", "phir", "अगला", "आगे",
+    "done", "ho gaya", "hogaya", "kar diya", "kardiya", "selected",
+    "ho gaya hai", "kar lia", "karlia", "theek hai", "haan", "ok", "okay"
+}
 
 SPEECH_REPLIES = {
     "en": {
@@ -207,6 +247,15 @@ SPEECH_REPLIES = {
         "biller_guidance_electricity": "For electricity, K-Electric is the first option on the list. Tap it to pay your electricity bill.",
         "biller_guidance_internet": "For your internet bill, PTCL Broadband is the third option in the list. Tap it to pay.",
         "autonomous_action_refusal": "For your security and privacy, I cannot execute transactions or enter information on your behalf. I am your guide — please tap the highlighted button to confirm it yourself.",
+        "cancel_or_back": "Understood, cancelling the action and taking you back to your home dashboard.",
+        "repeat_guidance": "Let me repeat that: please follow the highlighted option shown on your screen.",
+        "greeting_and_about": "Hello! I am Rasta AI, your voice banking assistant. I can guide you through sending money, paying bills, checking your balance, and managing your cards. How can I help you today?",
+        "emergency_card_freeze": "Don't worry, I have highlighted the card freeze toggle right here. Tap it immediately to freeze your card and protect your funds.",
+        "human_support_helpline": "Zenith 24/7 Helpline is 111-000-123. I have opened the support and profile page on your screen.",
+        "polite_closing": "You're very welcome! Let me know if you need assistance with anything else.",
+        "security_inquiry": "For your security, Zenith Bank and Rasta AI never have access to your PIN or password. All transfers require your personal biometric or OTP confirmation.",
+        "out_of_domain": "I am your Zenith banking assistant. While I cannot check the weather or browse the web, I can help you send money, pay bills, check your balance, or manage cards.",
+        "add_beneficiary_guidance": "To add a new beneficiary, tap the highlighted option, enter their bank details, and save them for instant transfers.",
     },
     "ur": {
         "check_balance": "آپ کا بیلنس دکھا رہا ہوں",
@@ -230,6 +279,15 @@ SPEECH_REPLIES = {
         "biller_guidance_electricity": "بجلی کے بل کے لیے، کے الیکٹرک لسٹ میں پہلے نمبر پر ہے۔ اس پر ٹیپ کریں۔",
         "biller_guidance_internet": "انٹرنیٹ کے بل کے لیے، پی ٹی سی ایل براڈ بینڈ لسٹ میں تیسرے نمبر پر ہے۔ اس پر کلک کریں۔",
         "autonomous_action_refusal": "آپ کے اکاؤنٹ کی سیکیورٹی کے لیے، مجھے خود ٹرانزیکشن کرنے یا آپ کی جگہ کلک کرنے کی اجازت نہیں ہے۔ میں آپ کی رہنمائی کر سکتا ہوں، برائے مہربانی اسکرین پر ہائی لائٹ کیے گئے بٹن کو خود دبائیں۔",
+        "cancel_or_back": "ٹھیک ہے، عمل منسوخ کر دیا گیا ہے۔ میں آپ کو واپس ہوم ڈیش بورڈ پر لے جا رہا ہوں۔",
+        "repeat_guidance": "میں دوبارہ بتا دیتا ہوں: اسکرین پر ہائی لائٹ کیے گئے آپشن پر ٹیپ کریں۔",
+        "greeting_and_about": "السلام علیکم! میں راستہ اے آئی ہوں، آپ کا وائس بینکنگ اسسٹنٹ۔ میں پیسے بھیجنے، بل جمع کروانے، کارڈ سنبھالنے اور بیلنس چیک کرنے میں آپ کی مدد کر سکتا ہوں۔ فرمائیے کیا کروں؟",
+        "emergency_card_freeze": "پریشان نہ ہوں، میں نے کارڈ بلاک اور فریز کا آپشن اسکرین پر ہائی لائٹ کر دیا ہے۔ فوری طور پر کارڈ فریز کرنے کے لیے بٹن دبائیں۔",
+        "human_support_helpline": "بینک ہیلپ لائن 111-000-123 چوبیس گھنٹے دستیاب ہے۔ میں نے سپورٹ اور پروفائل پیج اسکرین پر کھول دیا ہے۔",
+        "polite_closing": "بہت شکریہ! اگر آپ کو کسی اور چیز میں مدد درکار ہو تو ضرور بتائیے گا۔",
+        "security_inquiry": "آپ کے تحفظ کے لیے، راستہ اے آئی یا بینک کبھی آپ کا پن یا پاس ورڈ نہیں مانگتا۔ ہر ٹرانزیکشن کے لیے آپ کی بائیو میٹرک یا او ٹی پی تصدیق لازمی ہے۔",
+        "out_of_domain": "میں آپ کا راستہ بینکنگ اسسٹنٹ ہوں۔ میں پیسے بھیجنے، بل جمع کروانے، کارڈ سنبھالنے اور بیلنس چیک کرنے میں آپ کی مدد کر سکتا ہوں۔ بتائیں کیا کروں؟",
+        "add_beneficiary_guidance": "نیا وصول کنندہ شامل کرنے کے لیے، ہائی لائٹ کیے گئے بٹن پر ٹیپ کریں اور اکاؤنٹ کی تفصیلات درج کریں۔",
     }
 }
 
@@ -643,6 +701,30 @@ def decide_target(intent: str, screen: str):
         if screen in ("paybill-screen", "BillPayments"):
             return ["paybill-submit", "paybill-biller-select"]
         return []
+    if intent == "cancel_or_back":
+        return NAV_HOME
+    if intent == "repeat_guidance":
+        if last_highlighted:
+            return [last_highlighted]
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-balance-amount"]
+        return NAV_HOME
+    if intent == "greeting_and_about":
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-balance-amount"]
+        return NAV_HOME
+    if intent == "emergency_card_freeze":
+        if screen in ("cards-screen", "card-detail-screen", "CardManagement"):
+            return ["cards-freeze-toggle", "cards-open-card-debit-visa"]
+        return NAV_CARDS
+    if intent == "human_support_helpline":
+        return NAV_PROFILE
+    if intent == "add_beneficiary_guidance":
+        if screen in ("sendmoney-screen", "SendMoney"):
+            return ["beneficiary-sheet-add", "sendmoney-recipient-select"]
+        return NAV_TRANSFER
+    if intent in ("polite_closing", "security_inquiry", "out_of_domain", "language_switch"):
+        return []
     return []
 
 
@@ -915,6 +997,97 @@ def is_amount_query(text: str) -> bool:
     return bool(pattern.search(text))
 
 
+def is_cancel_query(text: str) -> bool:
+    """Check if user wants to cancel, go back, or return home."""
+    pattern = re.compile(
+        r"\b(cancel|stop|go\s+back|take\s+me\s+back|back|exit|home|wapas|روکو|منسوخ|واپس|ruk\s*jao|chhor\s*do|chhoro|main\s+menu)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_repeat_query(text: str) -> bool:
+    """Check if user asks to repeat the previous guidance."""
+    pattern = re.compile(
+        r"\b(repeat|say\s+again|what\s+did\s+you\s+say|pardon|dobara|phir\s+se\s+bolo|samajh\s+nahi\s+aayi|kya\s+bola|دوبارہ)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_greeting_query(text: str) -> bool:
+    """Check if user gives a greeting or asks who the agent is / what it does."""
+    pattern = re.compile(
+        r"\b(hello|hi|hey|assalam|suno|who\s+are\s+you|what\s+can\s+you\s+do|madad|aap\s+kya\s+kar\s+sakte|kya\s+features\s+hain|سلام)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_emergency_card_query(text: str) -> bool:
+    """Check if user reports a lost or stolen card or needs emergency freeze."""
+    pattern = re.compile(
+        r"\b(lost\s+(my\s+)?card|stolen\s+card|card\s+(is\s+)?stolen|card\s+chori|card\s+gum|block\s+(my\s+)?card|freeze\s+(my\s+)?card|کارڈ\s*چوری|کارڈ\s*بلاک)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_support_query(text: str) -> bool:
+    """Check if user asks for human customer support or the bank helpline."""
+    pattern = re.compile(
+        r"\b(helpline|human(\s+agent)?|talk\s+to\s+(a\s+)?human|representative|customer\s+(service|care)|call\s+center|numainda|rabta|complaint|ہیلپ\s*لائن|نمائندہ)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_closing_query(text: str) -> bool:
+    """Check if user says thank you or goodbye."""
+    pattern = re.compile(
+        r"\b(thank\s+you|thanks|shukriya|bye|goodbye|allah\s+hafiz|khuda\s+hafiz|see\s+you|شکریہ|اللہ\s*حافظ)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_security_query(text: str) -> bool:
+    """Check if user asks about PIN, password, or security."""
+    pattern = re.compile(
+        r"\b(what\s+is\s+my\s+pin|my\s+password|password|pin\s*code|can\s+you\s+see\s+my\s+pin|is\s+(this|it)\s+safe|is\s+(this|it)\s+secure|mera\s+(pin|password)|security|پاس\s*ورڈ|پن)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_beneficiary_query(text: str) -> bool:
+    """Check if user asks to add a new beneficiary or payee."""
+    pattern = re.compile(
+        r"\b(add\s+(a\s+)?(new\s+)?(beneficiary|payee|recipient|contact|person)|naya\s+(banda|payee|account)\s+add|add\s+new|نیا\s*وصول\s*کنندہ)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_out_of_domain_query(text: str) -> bool:
+    """Check if user is asking unrelated out-of-domain chitchat."""
+    pattern = re.compile(
+        r"\b(weather|order\s+pizza|order\s+food|book\s+a\s+flight|cricket\s+score|tell\s+me\s+a\s+joke|prime\s+minister|play\s+music)\b",
+        re.IGNORECASE
+    )
+    return bool(pattern.search(text))
+
+
+def is_language_switch_query(text: str) -> str:
+    """Returns 'ur' or 'en' if the user requested a language switch, or None."""
+    lower = text.lower()
+    if any(phrase in lower for phrase in ["urdu mein", "urdu me", "speak urdu", "talk in urdu", "urdu please", "اردو میں"]):
+        return "ur"
+    if any(phrase in lower for phrase in ["in english", "speak english", "talk in english", "english please", "انگریزی میں"]):
+        return "en"
+    return None
+
+
 async def _auto_advance_flow():
     """Timer callback — advance the guided flow automatically with neural voice guidance."""
     global _flow_timer
@@ -948,7 +1121,109 @@ async def handle_utterance(text: str):
     detected_lang = detect_language(utterance, default=_stt_language or "en")
     is_next = is_next_query(utterance)
 
-    if is_refusal_query(utterance):
+    # 1. Direct language switch command
+    lang_switch = is_language_switch_query(utterance)
+    if lang_switch:
+        _stt_language = lang_switch
+        detected_lang = lang_switch
+        reply_text = (
+            "Sure! I will speak with you in English from now on. How can I help you today?"
+            if lang_switch == "en"
+            else "جی بالکل، اب میں آپ سے اردو میں بات کروں گا۔ فرمائیے میں آپ کی کیا مدد کر سکتا ہوں؟"
+        )
+        intent_result = {
+            "intent": "language_switch",
+            "confidence": "high (lang_switch)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 2. Cancel / Back / Stop
+    elif is_cancel_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["cancel_or_back"]
+        intent_result = {
+            "intent": "cancel_or_back",
+            "confidence": "high (cancel)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = None
+        cancel_flow_advance()
+    # 3. Repeat previous instruction
+    elif is_repeat_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["repeat_guidance"]
+        intent_result = {
+            "intent": "repeat_guidance",
+            "confidence": "high (repeat)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 4. Emergency card freeze / stolen card
+    elif is_emergency_card_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["emergency_card_freeze"]
+        intent_result = {
+            "intent": "emergency_card_freeze",
+            "confidence": "high (emergency_card)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = "manage_card"
+    # 5. Customer support / Helpline
+    elif is_support_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["human_support_helpline"]
+        intent_result = {
+            "intent": "human_support_helpline",
+            "confidence": "high (support)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 6. Polite closing / Thank you / Bye
+    elif is_closing_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["polite_closing"]
+        intent_result = {
+            "intent": "polite_closing",
+            "confidence": "high (closing)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 7. Security / PIN inquiry
+    elif is_security_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["security_inquiry"]
+        intent_result = {
+            "intent": "security_inquiry",
+            "confidence": "high (security)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 8. Add new beneficiary
+    elif is_beneficiary_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["add_beneficiary_guidance"]
+        intent_result = {
+            "intent": "add_beneficiary_guidance",
+            "confidence": "high (beneficiary)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+        last_intent = "send_money"
+    # 9. Out of domain chitchat
+    elif is_out_of_domain_query(utterance):
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["out_of_domain"]
+        intent_result = {
+            "intent": "out_of_domain",
+            "confidence": "high (out_of_domain)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 10. Greetings & capability questions
+    elif is_greeting_query(utterance) and len(utterance.split()) <= 4:
+        reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["greeting_and_about"]
+        intent_result = {
+            "intent": "greeting_and_about",
+            "confidence": "high (greeting)",
+            "language": detected_lang,
+            "reply": reply_text
+        }
+    # 11. Refusal of autonomous action
+    elif is_refusal_query(utterance):
         reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["autonomous_action_refusal"]
         intent_result = {
             "intent": "autonomous_action_refusal",
@@ -956,6 +1231,7 @@ async def handle_utterance(text: str):
             "language": detected_lang,
             "reply": reply_text
         }
+    # 12. Specific billers
     elif is_biller_gas_query(utterance) and (current_screen in ("paybill-screen", "BillPayments") or "bill" in utterance.lower()):
         reply_text = SPEECH_REPLIES.get(detected_lang, SPEECH_REPLIES["en"])["biller_guidance_gas"]
         intent_result = {
@@ -1021,7 +1297,7 @@ async def handle_utterance(text: str):
             active_intent = last_intent or SCREEN_TO_INTENT.get(current_screen) or "send_money"
             last_intent = active_intent
             intent_result["intent"] = active_intent
-        elif intent_result["intent"] != "unknown":
+        elif intent_result["intent"] not in ("unknown", "polite_closing", "security_inquiry", "out_of_domain", "cancel_or_back"):
             last_intent = intent_result["intent"]
 
     intent = intent_result["intent"]
@@ -1045,21 +1321,24 @@ async def handle_utterance(text: str):
         return
 
     target = decide_target(intent, current_screen)
+    spoken_text = intent_result.get("reply", "")
+    guidance = None
+
     if target:
         guidance = resolve_guidance(FLOW_GUIDANCE, target[0], detected_lang)
         if not guidance and intent in NAV_GUIDANCE and (intent, current_screen) not in GUIDED_STEPS:
             guidance = resolve_guidance(NAV_GUIDANCE, intent, detected_lang)
+        if guidance:
+            spoken_text = guidance
 
-        spoken_text = guidance or intent_result.get("reply", "")
-        lang = detected_lang
+    audio_bytes = None
+    if spoken_text:
+        try:
+            audio_bytes = await synthesize_speech(spoken_text, language=detected_lang)
+        except Exception as tts_err:
+            print(f"[tts] Synthesis note: {tts_err}")
 
-        audio_bytes = None
-        if spoken_text:
-            try:
-                audio_bytes = await synthesize_speech(spoken_text, language=lang)
-            except Exception as tts_err:
-                print(f"[tts] Synthesis note: {tts_err}")
-
+    if target:
         await send_highlight(target, flow_guidance=spoken_text, audio_bytes=audio_bytes)
         last_highlighted = target[0]
 
@@ -1070,7 +1349,10 @@ async def handle_utterance(text: str):
         else:
             schedule_flow_advance()
     else:
-        print(f"[agent] nothing mapped for intent '{intent}' on '{current_screen}'")
+        # Conversational / informative response without a specific UI target element
+        # Deliver spoken neural audio and visual guidance banner so user is never ignored!
+        await send_highlight([], flow_guidance=spoken_text, audio_bytes=audio_bytes)
+        cancel_flow_advance()
 
 
 async def handler(websocket):

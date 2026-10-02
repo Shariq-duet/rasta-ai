@@ -14,6 +14,15 @@ INTENT = [
     "biller_guidance_electricity",
     "biller_guidance_internet",
     "autonomous_action_refusal",
+    "cancel_or_back",
+    "repeat_guidance",
+    "greeting_and_about",
+    "emergency_card_freeze",
+    "human_support_helpline",
+    "polite_closing",
+    "security_inquiry",
+    "out_of_domain",
+    "add_beneficiary_guidance",
     "unknown",
 ]
 
@@ -42,6 +51,15 @@ POLITE_REPLIES = {
         "biller_guidance_electricity": "بجلی کے بل کے لیے، کے الیکٹرک لسٹ میں پہلے نمبر پر ہے۔ اس پر ٹیپ کریں۔",
         "biller_guidance_internet": "انٹرنیٹ کے بل کے لیے، پی ٹی سی ایل براڈ بینڈ لسٹ میں تیسرے نمبر پر ہے۔ اس پر کلک کریں۔",
         "autonomous_action_refusal": "آپ کے اکاؤنٹ کی سیکیورٹی کے لیے، مجھے خود ٹرانزیکشن کرنے یا آپ کی جگہ کلک کرنے کی اجازت نہیں ہے۔ میں آپ کی رہنمائی کر سکتا ہوں، برائے مہربانی اسکرین پر ہائی لائٹ کیے گئے بٹن کو خود دبائیں۔",
+        "cancel_or_back": "ٹھیک ہے، عمل منسوخ کر دیا گیا ہے۔ میں آپ کو واپس ہوم ڈیش بورڈ پر لے جا رہا ہوں۔",
+        "repeat_guidance": "میں دوبارہ بتا دیتا ہوں: اسکرین پر ہائی لائٹ کیے گئے آپشن پر ٹیپ کریں۔",
+        "greeting_and_about": "السلام علیکم! میں راستہ اے آئی ہوں، آپ کا وائس بینکنگ اسسٹنٹ۔ میں پیسے بھیجنے، بل جمع کروانے، کارڈ سنبھالنے اور بیلنس چیک کرنے میں آپ کی مدد کر سکتا ہوں۔ فرمائیے کیا کروں؟",
+        "emergency_card_freeze": "پریشان نہ ہوں، میں نے کارڈ بلاک اور فریز کا آپشن اسکرین پر ہائی لائٹ کر دیا ہے۔ فوری طور پر کارڈ فریز کرنے کے لیے بٹن دبائیں۔",
+        "human_support_helpline": "بینک ہیلپ لائن 111-000-123 چوبیس گھنٹے دستیاب ہے۔ میں نے سپورٹ اور پروفائل پیج اسکرین پر کھول دیا ہے۔",
+        "polite_closing": "بہت شکریہ! اگر آپ کو کسی اور چیز میں مدد درکار ہو تو ضرور بتائیے گا۔",
+        "security_inquiry": "آپ کے تحفظ کے لیے، راستہ اے آئی یا بینک کبھی آپ کا پن یا پاس ورڈ نہیں مانگتا۔ ہر ٹرانزیکشن کے لیے آپ کی بائیو میٹرک یا او ٹی پی تصدیق لازمی ہے۔",
+        "out_of_domain": "میں آپ کا راستہ بینکنگ اسسٹنٹ ہوں۔ میں پیسے بھیجنے، بل جمع کروانے، کارڈ سنبھالنے اور بیلنس چیک کرنے میں آپ کی مدد کر سکتا ہوں۔ بتائیں کیا کروں؟",
+        "add_beneficiary_guidance": "نیا وصول کنندہ شامل کرنے کے لیے، ہائی لائٹ کیے گئے بٹن پر ٹیپ کریں اور اکاؤنٹ کی تفصیلات درج کریں۔",
         "unknown": "معاف کیجیے گا، میں سمجھ نہیں پایا۔ کیا آپ پیسے بھیجنا چاہتے ہیں یا بیلنس چیک کرنا چاہتے ہیں؟",
     },
     "en": {
@@ -67,6 +85,15 @@ POLITE_REPLIES = {
         "biller_guidance_electricity": "For electricity, K-Electric is the first option on the list. Tap it to pay your electricity bill.",
         "biller_guidance_internet": "For your internet bill, PTCL Broadband is the third option in the list. Tap it to pay.",
         "autonomous_action_refusal": "For your security and privacy, I cannot execute transactions or enter information on your behalf. I am your guide — please tap the highlighted button to confirm it yourself.",
+        "cancel_or_back": "Understood, cancelling the action and taking you back to your home dashboard.",
+        "repeat_guidance": "Let me repeat that: please follow the highlighted option shown on your screen.",
+        "greeting_and_about": "Hello! I am Rasta AI, your voice banking assistant. I can guide you through sending money, paying bills, checking your balance, and managing your cards. How can I help you today?",
+        "emergency_card_freeze": "Don't worry, I have highlighted the card freeze toggle right here. Tap it immediately to freeze your card and protect your funds.",
+        "human_support_helpline": "Zenith 24/7 Helpline is 111-000-123. I have opened the support and profile page on your screen.",
+        "polite_closing": "You're very welcome! Let me know if you need assistance with anything else.",
+        "security_inquiry": "For your security, Zenith Bank and Rasta AI never have access to your PIN or password. All transfers require your personal biometric or OTP confirmation.",
+        "out_of_domain": "I am your Zenith banking assistant. While I cannot check the weather or browse the web, I can help you send money, pay bills, check your balance, or manage cards.",
+        "add_beneficiary_guidance": "To add a new beneficiary, tap the highlighted option, enter their bank details, and save them for instant transfers.",
         "unknown": "I'm sorry, I didn't quite catch that. Would you like to check your balance, pay a bill, or transfer funds?",
     }
 }
@@ -94,9 +121,17 @@ Rules:
   * Gas bill / Sui Gas / SSGC: classify as 'biller_guidance_gas'.
   * Electricity / K-Electric / Bijli: classify as 'biller_guidance_electricity'.
   * Internet / PTCL / Broadband: classify as 'biller_guidance_internet'.
-- AUTONOMOUS ACTION REFUSAL: If user asks the AI to execute an action for them ('send it for me', 'do this for me', 'pay this for me', 'click the button for me', 'mere liye transfer kar do', 'khud kar do'), classify as 'autonomous_action_refusal'. Explain politely that for security reasons, the assistant cannot execute transactions directly.
+- AUTONOMOUS ACTION REFUSAL: If user asks the AI to execute an action for them ('send it for me', 'do this for me', 'pay this for me', 'click the button for me', 'mere liye transfer kar do', 'khud kar do'), classify as 'autonomous_action_refusal'.
+- CANCEL / GO BACK: If user asks to cancel, go back, stop, or go home ('cancel this', 'go back', 'wapas jao', 'roko'), classify as 'cancel_or_back'.
+- REPEAT: If user asks to repeat ('repeat that', 'what did you say?', 'dobara bolo', 'samajh nahi aayi'), classify as 'repeat_guidance'.
+- GREETING / ABOUT: If user greets or asks who you are ('hello', 'hi', 'who are you', 'what can you do', 'suno', 'assalam-o-alaikum'), classify as 'greeting_and_about'.
+- LOST / EMERGENCY CARD: If user says they lost their card or card was stolen ('lost my card', 'card chori ho gaya', 'block my card immediately'), classify as 'emergency_card_freeze'.
+- HUMAN SUPPORT: If user asks for helpline or human agent ('talk to human', 'helpline', 'representative', 'numainda'), classify as 'human_support_helpline'.
+- POLITE CLOSING: If user says thank you or bye ('thank you', 'thanks', 'shukriya', 'bye', 'allah hafiz'), classify as 'polite_closing'.
+- SECURITY / PIN: If user asks for password/PIN or security ('what is my pin', 'mera password kya hai', 'is it safe'), classify as 'security_inquiry'.
+- OUT OF DOMAIN: If user asks unrelated queries ('weather', 'pizza', 'who is prime minister', 'joke'), classify as 'out_of_domain'.
+- ADD BENEFICIARY: If user asks to add new contact/payee ('add beneficiary', 'naya banda add karna', 'new payee'), classify as 'add_beneficiary_guidance'.
 - Language Mirroring: If the input is in English, reply in friendly English and set "language": "en". If the input is Urdu or Roman Urdu, reply in Urdu and set "language": "ur".
-- Keep sentences short, natural, and friendly.
 """
 
 
