@@ -38,6 +38,19 @@ export default function QrPayPage() {
     const screen = step === 'success' ? 'qrpay-success-screen' : step === 'confirm' ? 'qrpay-confirm-screen' : 'qr-pay-screen'
     broadcastScreen(screen)
   }, [step])
+
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      const text = (e.detail?.transcript || '').toLowerCase()
+      const found = merchants.find((m) => text.includes(m.name.toLowerCase()))
+      if (found) {
+        selectMerchant(found)
+        setStep('confirm')
+      }
+    }
+    window.addEventListener('AGENT_UPDATE', handleUpdate)
+    return () => window.removeEventListener('AGENT_UPDATE', handleUpdate)
+  }, [selectMerchant])
   const completePayment = () => {
     setReference(`QRP${Math.floor(100_000_000 + Math.random() * 899_999_999)}`)
     setStep('success')

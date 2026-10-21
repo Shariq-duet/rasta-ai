@@ -86,10 +86,22 @@ async def synthesize_speech(text: str, language: str = "ur", voice_gender: str =
     if cache_key in _AUDIO_CACHE:
         return _AUDIO_CACHE[cache_key]
 
+    # For Urdu: Prioritize Microsoft's dedicated Pakistani Neural voices (Uzma / Asad).
+    # These are natively trained on native Pakistani Urdu speakers and sound completely natural,
+    # avoiding the foreign robotic accent that American ElevenLabs voices have when reading Urdu.
     audio_bytes = None
+    lang_key = "en" if language.lower().startswith("en") else "ur"
 
-    # Tier 1: ElevenLabs (if configured)
-    if get_elevenlabs_key():
+    if lang_key == "ur":
+        voice = NEURAL_VOICES["ur"].get(voice_gender, NEURAL_VOICES["ur"]["female"])
+        try:
+            audio_bytes = await synthesize_with_edgetts(clean_text, voice)
+            print(f"[tts] Native Urdu Neural ({voice}) synthesized ({len(audio_bytes)} bytes)")
+        except Exception as e:
+            print(f"[tts] edge-tts notice: {e}. Trying ElevenLabs fallback...")
+
+    # For English, or fallback for Urdu if edge-tts fails:
+    if not audio_bytes and get_elevenlabs_key():
         try:
             loop = asyncio.get_event_loop()
             audio_bytes = await loop.run_in_executor(
@@ -99,9 +111,8 @@ async def synthesize_speech(text: str, language: str = "ur", voice_gender: str =
         except Exception as e:
             print(f"[tts] ElevenLabs notice: {e}. Falling back to Microsoft Neural...")
 
-    # Tier 2: Microsoft Neural edge-tts
+    # Final fallback for English if ElevenLabs was not used or failed
     if not audio_bytes:
-        lang_key = "en" if language.lower().startswith("en") else "ur"
         voice = NEURAL_VOICES[lang_key].get(voice_gender, NEURAL_VOICES[lang_key]["female"])
         try:
             audio_bytes = await synthesize_with_edgetts(clean_text, voice)

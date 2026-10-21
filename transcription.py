@@ -23,6 +23,12 @@ def transcribe_with_groq(audio_bytes: bytes, filename: str = "audio.wav", langua
     if language and language != "auto":
         data["language"] = language
 
+    data["prompt"] = (
+        "Zenith Bank, Rasta AI, transfer funds, balance inquiry, bill payment, "
+        "K-Electric, SSGC, PTCL, Jazz, Zong, PKR, rupees, Hamza, Sana, Bilal, Ayesha, "
+        "پیسے بھیجو, بل ادا کرو, کے الیکٹرک, سوئی گیس, بیلنس, چیک بک, کارڈ فریز"
+    )
+
     response = requests.post(
         "https://api.groq.com/openai/v1/audio/transcriptions",
         headers=headers,

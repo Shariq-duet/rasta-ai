@@ -60,6 +60,17 @@ export default function CertificatesPage() {
   useEffect(() => {
     broadcastScreen(submitted ? 'certificate-success-screen' : 'certificates-screen')
   }, [submitted])
+
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      const text = (e.detail?.transcript || '').toLowerCase()
+      if (text.includes('tax')) setSelected('tax')
+      else if (text.includes('maintenance')) setSelected('account-maintenance')
+      else if (text.includes('balance') || e.detail?.intent === 'request_certificate') setSelected('balance')
+    }
+    window.addEventListener('AGENT_UPDATE', handleUpdate)
+    return () => window.removeEventListener('AGENT_UPDATE', handleUpdate)
+  }, [])
   if (submitted) {
     return (
       <div className="flex flex-col gap-4 pt-4 lg:mx-auto lg:w-full lg:max-w-2xl">

@@ -110,10 +110,17 @@ Output format (strictly valid JSON only, no markdown, no explanation):
   "intent": "<one of the valid intents>",
   "confidence": "<high|medium|low>",
   "language": "ur|en",
-  "reply": "<friendly, everyday casual 1-2 sentence spoken reply guiding the user. If the user spoke English, you MUST reply in fluent, natural English with 'language': 'en'. If the user spoke Urdu or Roman Urdu, reply in simple casual everyday Urdu with 'language': 'ur'.>"
+  "reply": "<friendly, everyday casual 1-2 sentence spoken reply guiding the user. If the user spoke English, you MUST reply in fluent, natural English with 'language': 'en'. If the user spoke Urdu or Roman Urdu, reply in simple casual everyday Urdu with 'language': 'ur'.>",
+  "slots": {{
+    "recipient": "<extracted beneficiary/contact name if mentioned, e.g. 'Hamza', 'Sana', 'Bilal', 'Nadia', or null>",
+    "amount": "<extracted numeric PKR amount if mentioned, e.g. 5000, 10000, or null>",
+    "biller": "<extracted utility/biller id if mentioned: 'k-electric' | 'ssgc' | 'ptcl' | 'jazz-postpaid' | null>",
+    "note": "<extracted purpose/note if mentioned, e.g. 'Rent', 'Dinner', or null>"
+  }}
 }}
 
 Rules:
+- ENTITY EXTRACTION: Whenever user mentions a recipient name (Hamza, Sana, Bilal, Nadia, Usman, etc.) or an amount (e.g. 5000, 10000) or biller, extract them cleanly into the "slots" object.
 - NEXT / CONTINUATION: If user asks what to do next ('what do I do next?', 'what should I do now?', 'where do I click?', 'ab kya karna hai?'), classify as 'next_step'.
 - RECIPIENT HELP: If user asks where or how to choose/find recipient ('how should I choose recipient?', 'where can I find recipient?', 'banda kahan hai?'), classify as 'recipient_guidance'.
 - AMOUNT HELP: If user asks where to enter amount ('where do I enter amount?', 'amount kahan likhoon?'), classify as 'amount_guidance'.
@@ -121,7 +128,7 @@ Rules:
   * Gas bill / Sui Gas / SSGC: classify as 'biller_guidance_gas'.
   * Electricity / K-Electric / Bijli: classify as 'biller_guidance_electricity'.
   * Internet / PTCL / Broadband: classify as 'biller_guidance_internet'.
-- AUTONOMOUS ACTION REFUSAL: If user asks the AI to execute an action for them ('send it for me', 'do this for me', 'pay this for me', 'click the button for me', 'mere liye transfer kar do', 'khud kar do'), classify as 'autonomous_action_refusal'.
+- AUTONOMOUS ACTION REFUSAL: Classify as 'autonomous_action_refusal' ONLY if user asks the AI to autonomously execute, press confirm, click the button without review, or bypass user approval (e.g. 'click confirm for me', 'press the button', 'khud confirm kardo', 'send it for me without asking'). DO NOT refuse natural polite requests with recipients/amounts/billers (e.g. 'Can you send Sana 500 rupees', 'Can you pay my gas bill', 'Sana ko 500 bhej do') — classify those as 'send_money' or 'pay_bill' and extract their slots so the AI can fill the form for human review!
 - CANCEL / GO BACK: If user asks to cancel, go back, stop, or go home ('cancel this', 'go back', 'wapas jao', 'roko'), classify as 'cancel_or_back'.
 - REPEAT: If user asks to repeat ('repeat that', 'what did you say?', 'dobara bolo', 'samajh nahi aayi'), classify as 'repeat_guidance'.
 - GREETING / ABOUT: If user greets or asks who you are ('hello', 'hi', 'who are you', 'what can you do', 'suno', 'assalam-o-alaikum'), classify as 'greeting_and_about'.

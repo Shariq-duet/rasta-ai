@@ -97,9 +97,10 @@ NAV_GUIDANCE = {
 
 FALLBACK_RULES = [
     ("autonomous_action_refusal", [
-        "for me", "do this", "do that", "send it for me", "pay it for me", "transfer it for me",
-        "click it", "enter my", "enter it", "submit it", "mere liye", "khud kar",
-        "khud bhej", "khud pay", "apne hath se", "can you do this", "can you do that",
+        "click confirm for me", "click it for me", "press confirm for me", "press the button",
+        "click the button", "enter my password", "enter my pin", "khud confirm", "khud bhej do",
+        "khud kar do", "khud pay kar do", "apne hath se kar do", "send it for me", "pay it for me",
+        "transfer it for me", "bina mere confirm",
     ]),
     ("biller_guidance_gas", [
         "sui gas", "ssgc", "so you guys", "sui southern", "gas bill", "guest bill", "gas",
@@ -545,20 +546,30 @@ FLOW_INTENTS = {
     "manage_card",
 }
 
+INTENT_TO_FLOW = {
+    "biller_guidance_electricity": "pay_bill",
+    "biller_guidance_gas": "pay_bill",
+    "biller_guidance_internet": "pay_bill",
+    "emergency_card_freeze": "manage_card",
+    "recipient_guidance": "send_money",
+    "amount_guidance": "send_money",
+    "add_beneficiary_guidance": "send_money",
+}
+
 connected_clients = set()
 current_screen = None  # the screen the browser last reported
 last_intent = None  # preserved across screens so "next" advances a guided flow
 flow_position = {}  # (intent, screen) -> next step index in GUIDED_STEPS
 
-# Auto-advance delay: after highlighting a guided step, the agent
-# automatically advances to the next step after this many seconds.
-AUTO_ADVANCE_DELAY = 12
+AUTO_ADVANCE_DELAY = 0  # Event-driven: advances on user clicks, modal selections, or 'next' commands
 _flow_timer = None  # asyncio timer handle for auto-advance
+is_autofill_active = False
+is_modal_open = False
 
 # The agent supports English and Urdu. The user picks a language in the
 # banking UI; the browser sends AGENT_LANGUAGE to update _stt_language.
-# Defaults to English until the UI says otherwise.
-_stt_language = "en"
+# Defaults to Urdu (native Pakistani banking assistant) until the UI or user says otherwise.
+_stt_language = "ur"
 
 _whisper_model = None  # loaded lazily on first `voice` command
 last_highlighted = None  # the data-agent-id of the most recent highlight
@@ -600,11 +611,13 @@ def decide_target(intent: str, screen: str):
     the first one that exists in the DOM (handles mobile vs desktop nav).
     Returns an empty list when nothing matches.
     """
+    canonical = INTENT_TO_FLOW.get(intent, intent)
     # Check guided flow steps first — "next" walks through them
-    steps = GUIDED_STEPS.get((intent, screen))
+    steps = GUIDED_STEPS.get((intent, screen)) or GUIDED_STEPS.get((canonical, screen))
     if steps:
-        index = flow_position.get((intent, screen), 0)
+        index = flow_position.get((intent, screen), flow_position.get((canonical, screen), 0))
         flow_position[(intent, screen)] = (index + 1) % len(steps)
+        flow_position[(canonical, screen)] = flow_position[(intent, screen)]
         return [steps[index]]
 
     if intent == "check_balance":
@@ -665,8 +678,8 @@ def decide_target(intent: str, screen: str):
         if screen == "cheque-book-screen":
             return ["cheque-tab-stop"]
         return NAV_CHEQUE_BOOK
-    if intent == "manage_card":
-        if screen == "cards-screen":
+    if intent in ("manage_card", "emergency_card_freeze"):
+        if screen in ("cards-screen", "CardManagement"):
             return ["cards-open-card-debit-visa"]
         if screen == "card-detail-screen":
             return ["cards-freeze-toggle"]
@@ -713,10 +726,6 @@ def decide_target(intent: str, screen: str):
         if screen in ("home-screen", "Dashboard"):
             return ["home-balance-amount"]
         return NAV_HOME
-    if intent == "emergency_card_freeze":
-        if screen in ("cards-screen", "card-detail-screen", "CardManagement"):
-            return ["cards-freeze-toggle", "cards-open-card-debit-visa"]
-        return NAV_CARDS
     if intent == "human_support_helpline":
         return NAV_PROFILE
     if intent == "add_beneficiary_guidance":
@@ -738,14 +747,15 @@ async def _client_send(client, message):
         pass
 
 
-async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None):
-    """Send AGENT_HIGHLIGHT with candidate ids, guidance text, and high-fidelity neural audio.
+async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None, transcript=None, intent=None, confidence=None, autofill=None):
+    """Send AGENT_HIGHLIGHT with candidate ids, guidance text, neural audio, and AI reasoning metadata.
 
-    The browser bridge highlights the element and plays the neural audio directly.
+    The browser bridge highlights the element, plays the neural audio, updates the Voice HUD,
+    and applies form pre-filling if requested.
     """
     if isinstance(target_ids, str):
         target_ids = [target_ids]
-    if not target_ids and not audio_bytes:
+    if not target_ids and not audio_bytes and not flow_guidance:
         print("[highlight] nothing to highlight")
         return
     if not connected_clients:
@@ -756,6 +766,14 @@ async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None):
         payload["flowGuidance"] = flow_guidance
     if audio_bytes:
         payload["audio"] = base64.b64encode(audio_bytes).decode("utf-8")
+    if transcript:
+        payload["transcript"] = transcript
+    if intent:
+        payload["intent"] = intent
+    if confidence:
+        payload["confidence"] = confidence
+    if autofill:
+        payload["autofill"] = autofill
     message = json.dumps(payload, ensure_ascii=False)
     await asyncio.gather(*(_client_send(client, message) for client in list(connected_clients)))
     label = flow_guidance or target_ids
@@ -840,9 +858,10 @@ def schedule_flow_advance():
     """Schedule auto-advance to the next guided step after AUTO_ADVANCE_DELAY."""
     global _flow_timer
     cancel_flow_advance()
-    _flow_timer = asyncio.get_event_loop().call_later(
-        AUTO_ADVANCE_DELAY, lambda: asyncio.ensure_future(_auto_advance_flow())
-    )
+    if AUTO_ADVANCE_DELAY > 0 and not is_modal_open:
+        _flow_timer = asyncio.get_event_loop().call_later(
+            AUTO_ADVANCE_DELAY, lambda: asyncio.ensure_future(_auto_advance_flow())
+        )
 
 
 def cancel_flow_advance():
@@ -869,7 +888,7 @@ def resolve_guidance(guidance_dict: dict, key: str, lang: str = "en") -> str:
     return guidance_dict.get(alt_key, {}).get(key, "")
 
 
-def detect_language(text: str, default: str = "en") -> str:
+def detect_language(text: str, default: str = "ur") -> str:
     """Detect language (en or ur) from user text robustly."""
     if not text:
         return default
@@ -883,9 +902,12 @@ def detect_language(text: str, default: str = "en") -> str:
     tokens = set(re.findall(r"\b[a-zA-Z]+\b", text.lower()))
     roman_urdu = {
         "mera", "meri", "mere", "apna", "apni", "karo", "karna", "karein", "kare",
-        "bhejo", "bhejna", "paise", "paisa", "rupay", "kitna", "kitne", "hai",
-        "hain", "tha", "thi", "kya", "kyun", "kaise", "ab", "aage", "agla",
-        "batao", "dikhao", "sunao", "bijli", "zarurat", "karun", "chahiye", "zara"
+        "bhejo", "bhejna", "bhej", "paise", "paisa", "rupay", "rupaye", "rupees", "kitna", "kitne", "kitni", "hai",
+        "hain", "tha", "thi", "kya", "kyun", "kaise", "ab", "aage", "agla", "agli",
+        "batao", "dikhao", "sunao", "bijli", "zarurat", "karun", "chahiye", "zara",
+        "ko", "se", "pe", "par", "mein", "me", "main", "hum", "tum", "aap", "mujhe",
+        "hazaar", "hazar", "sau", "so", "lakh", "crore", "chalo", "chalain", "khol",
+        "kholo", "de", "do", "dena", "bhai", "yaar", "theek", "shukriya", "madad"
     }
     if tokens & roman_urdu:
         return "ur"
@@ -894,9 +916,9 @@ def detect_language(text: str, default: str = "en") -> str:
         "what", "do", "i", "next", "how", "send", "money", "check", "balance",
         "bill", "pay", "please", "can", "you", "help", "where", "should", "now",
         "proceed", "continue", "card", "cards", "transfer", "statement", "profile",
-        "to", "the", "a", "an", "is", "are", "my", "account"
+        "to", "the", "a", "an", "is", "are", "my", "account", "transaction", "transactions"
     }
-    if tokens & english_words or len(tokens) >= 2:
+    if tokens & english_words:
         return "en"
 
     return default
@@ -925,23 +947,90 @@ def is_next_query(text: str) -> bool:
     return bool(pattern.search(text))
 
 
+BILLER_CATALOG = {
+    "ssgc": {
+        "id": "ssgc",
+        "name": "Sui Southern Gas Company",
+        "name_ur": "سوئی سدرن گیس کمپنی",
+        "amount": "3640",
+        "keywords": ["gas", "ssgc", "sui gas", "sui southern", "گیس", "سوئی گیس"]
+    },
+    "k-electric": {
+        "id": "k-electric",
+        "name": "K-Electric",
+        "name_ur": "کے الیکٹرک",
+        "amount": "14820",
+        "keywords": ["electric", "electricity", "k-electric", "kelectric", "bijli", "بجلی", "کے الیکٹرک"]
+    },
+    "ptcl": {
+        "id": "ptcl",
+        "name": "PTCL Broadband",
+        "name_ur": "پی ٹی سی ایل براڈبینڈ",
+        "amount": "4499",
+        "keywords": ["ptcl", "broadband", "internet", "wifi", "انٹرنیٹ", "پی ٹی سی ایل"]
+    },
+    "jazz-postpaid": {
+        "id": "jazz-postpaid",
+        "name": "Jazz Postpaid",
+        "name_ur": "جاز پوسٹ پیڈ",
+        "amount": "2890",
+        "keywords": ["jazz", "جاز"]
+    },
+    "zong-postpaid": {
+        "id": "zong-postpaid",
+        "name": "Zong Postpaid",
+        "name_ur": "زونگ پوسٹ پیڈ",
+        "amount": "1750",
+        "keywords": ["zong", "زونگ"]
+    },
+    "kwsb": {
+        "id": "kwsb",
+        "name": "Karachi Water & Sewerage Board",
+        "name_ur": "کراچی واٹر بورڈ",
+        "amount": "1980",
+        "keywords": ["water", "pani", "kwsb", "پانی"]
+    }
+}
+
+
 def is_refusal_query(text: str) -> bool:
-    """Check if user asks the agent to autonomously execute an action."""
-    pattern = re.compile(
-        r"\b(do\s+(this|it|that)\s+for\s+me|"
-        r"do\s+(this|that)|"
-        r"send\s+(it|money|this)?(\s+for\s+me)|"
-        r"pay\s+(it|this|bill)?(\s+for\s+me)|"
-        r"transfer\s+(it|this)?(\s+for\s+me)|"
-        r"click\s+(it|this|the\s+button)\s+(for\s+me)?|"
-        r"enter\s+(it|my|password)\s+(for\s+me)?|"
-        r"can\s+you\s+(pay|send|transfer|click|do|submit)\s+(it|this)?(\s+for\s+me)?|"
-        r"mere\s+liye\s+(kar|bhej|pay|transfer)|"
-        r"khud\s+(kar\s+do|bhej\s+do|pay\s+kar\s+do|transfer\s+kar\s+do)|"
-        r"apne\s+hath\s+se)\b",
+    """Check if user asks the agent to autonomously execute an action without human confirmation."""
+    # If user provides details for a transaction (recipient, amount, or biller),
+    # this is a normal assistive request (e.g. "Can you send Sana 500 rupees", "Can you pay gas bill"),
+    # NOT an autonomous action refusal!
+    has_amount_or_entity = bool(
+        re.search(r"\b(\d+|sana|hamza|ali|bilal|nadia|usman|rehman|gas|bijli|electric|ptcl|ssgc|broadband|wifi|rupees|rupay|pkr|rs)\b", text, re.IGNORECASE)
+        or any(kw in text for kw in ["روپے", "گیس", "بجلی", "بل"])
+    )
+
+    # Explicit bypass keywords: user commanding the bot to click the final confirm button or enter secrets
+    explicit_bypass = re.compile(
+        r"\b((click|press|tap)\s+(the\s+)?(button|confirm|submit|approve|send\s+button|pay\s+button)|"
+        r"(click|press|tap)\s+(it|this)\s+for\s+me|"
+        r"enter\s+(my\s+)?(password|pin|credentials)|"
+        r"khud\s+(confirm|click|press)|"
+        r"bina\s+mere\s+(bhej|confirm)|"
+        r"without\s+(me|my\s+confirmation))\b",
         re.IGNORECASE
     )
-    return bool(pattern.search(text))
+    if explicit_bypass.search(text):
+        return True
+
+    if has_amount_or_entity:
+        return False
+
+    # Standalone autonomous requests with no details (e.g. "send it for me", "pay it for me", "khud kar do")
+    generic_refusal = re.compile(
+        r"\b(send\s+(it|this)\s+for\s+me|"
+        r"pay\s+(it|this)\s+for\s+me|"
+        r"transfer\s+(it|this)\s+for\s+me|"
+        r"do\s+(it|this|that)\s+for\s+me|"
+        r"mere\s+liye\s+(kar\s+do|bhej\s+do|pay\s+kar\s+do|transfer\s+kar\s+do)|"
+        r"khud\s+(kar\s+do|bhej\s+do|pay\s+kar\s+do|transfer\s+kar\s+do)|"
+        r"apne\s+hath\s+se\s+(kar|bhej|pay))\b",
+        re.IGNORECASE
+    )
+    return bool(generic_refusal.search(text))
 
 
 def is_recipient_query(text: str) -> bool:
@@ -999,6 +1088,8 @@ def is_amount_query(text: str) -> bool:
 
 def is_cancel_query(text: str) -> bool:
     """Check if user wants to cancel, go back, or return home."""
+    if any(k in text.lower() for k in ["cheque", "check"]) or "چیک" in text:
+        return False
     pattern = re.compile(
         r"\b(cancel|stop|go\s+back|take\s+me\s+back|back|exit|home|wapas|روکو|منسوخ|واپس|ruk\s*jao|chhor\s*do|chhoro|main\s+menu)\b",
         re.IGNORECASE
@@ -1099,7 +1190,7 @@ async def _auto_advance_flow():
     target = decide_target(last_intent, current_screen)
     if not target:
         return
-    lang = _stt_language or "en"
+    lang = _stt_language or "ur"
     guidance = resolve_guidance(FLOW_GUIDANCE, target[0], lang)
     audio_bytes = None
     if guidance:
@@ -1118,7 +1209,7 @@ async def handle_utterance(text: str):
     if not utterance:
         return
 
-    detected_lang = detect_language(utterance, default=_stt_language or "en")
+    detected_lang = detect_language(utterance, default=_stt_language or "ur")
     is_next = is_next_query(utterance)
 
     # 1. Direct language switch command
@@ -1288,9 +1379,11 @@ async def handle_utterance(text: str):
         }
     else:
         intent_result = classify(utterance)
-        # Use detected language if classifier defaulted to urdu or didn't set it
+        # Ensure reply language matches detected_lang (Urdu or English)
         if detected_lang == "en" and intent_result.get("language") != "en":
             intent_result["language"] = "en"
+        elif detected_lang == "ur" and intent_result.get("language") != "ur":
+            intent_result["language"] = "ur"
         detected_lang = intent_result.get("language", detected_lang)
 
         if intent_result["intent"] == "next_step":
@@ -1298,7 +1391,8 @@ async def handle_utterance(text: str):
             last_intent = active_intent
             intent_result["intent"] = active_intent
         elif intent_result["intent"] not in ("unknown", "polite_closing", "security_inquiry", "out_of_domain", "cancel_or_back"):
-            last_intent = intent_result["intent"]
+            canonical = INTENT_TO_FLOW.get(intent_result["intent"], intent_result["intent"])
+            last_intent = canonical
 
     intent = intent_result["intent"]
     print(f"[intent] {json.dumps(intent_result, ensure_ascii=False)}")
@@ -1322,14 +1416,88 @@ async def handle_utterance(text: str):
 
     target = decide_target(intent, current_screen)
     spoken_text = intent_result.get("reply", "")
+    slots = intent_result.get("slots") or {}
+    autofill = None
     guidance = None
 
-    if target:
-        guidance = resolve_guidance(FLOW_GUIDANCE, target[0], detected_lang)
-        if not guidance and intent in NAV_GUIDANCE and (intent, current_screen) not in GUIDED_STEPS:
-            guidance = resolve_guidance(NAV_GUIDANCE, intent, detected_lang)
-        if guidance:
-            spoken_text = guidance
+    global is_autofill_active
+    # Smart Entity Extraction & Form Pre-fill with strict Human Confirmation safety
+    if intent == "send_money" and (slots.get("recipient") or slots.get("amount")):
+        is_autofill_active = True
+        autofill = {
+            "type": "transfer",
+            "recipient": slots.get("recipient"),
+            "amount": slots.get("amount"),
+            "note": slots.get("note") or "Voice Transfer"
+        }
+        target = ["sendmoney-submit"]
+        recip_display = slots.get("recipient") or "your beneficiary"
+        amt_display = f"PKR {slots.get('amount')}" if slots.get("amount") else ""
+        if detected_lang == "ur":
+            spoken_text = f"میں نے {slots.get('recipient') or ''} کے لیے رقم کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم پر ٹیپ کریں۔"
+        else:
+            spoken_text = f"I have set up the transfer of {amt_display} for {recip_display}. Please review and tap Confirm to execute."
+        guidance = spoken_text
+    else:
+        # Check if bill payment or specific biller requested
+        matched_biller = None
+        if intent == "biller_guidance_gas" or is_biller_gas_query(utterance):
+            matched_biller = BILLER_CATALOG["ssgc"]
+        elif intent == "biller_guidance_electricity" or is_biller_electricity_query(utterance):
+            matched_biller = BILLER_CATALOG["k-electric"]
+        elif intent == "biller_guidance_internet" or is_biller_internet_query(utterance):
+            matched_biller = BILLER_CATALOG["ptcl"]
+        elif (intent == "pay_bill" or "bill" in utterance.lower()) and slots.get("biller"):
+            sb = str(slots.get("biller")).lower()
+            for k, v in BILLER_CATALOG.items():
+                if k in sb or any(kw in sb for kw in v["keywords"]):
+                    matched_biller = v
+                    break
+
+        should_autofill_bill = matched_biller and (
+            current_screen in ("paybill-screen", "BillPayments", "home-screen", "Dashboard")
+            or slots.get("amount")
+        )
+
+        if should_autofill_bill and matched_biller:
+            b_amt = slots.get("amount") or matched_biller["amount"]
+            is_autofill_active = True
+            autofill = {
+                "type": "bill",
+                "biller": matched_biller["id"],
+                "amount": str(b_amt)
+            }
+            if current_screen in ("paybill-screen", "BillPayments"):
+                target = ["paybill-submit", f"paybill-biller-{matched_biller['id']}"]
+            else:
+                target = ["paybill-submit", "side-nav-bills", "mobile-nav-bills"]
+            last_intent = "pay_bill"
+            if detected_lang == "ur":
+                spoken_text = f"میں نے آپ کا {matched_biller['name_ur']} کا بل برائے {b_amt} روپے منتخب کر دیا ہے۔ برائے مہربانی ریویو کر کے آگے بڑھیں۔"
+            else:
+                spoken_text = f"I have selected your {matched_biller['name']} bill for PKR {b_amt}. Please review and tap Review Payment to proceed."
+            guidance = spoken_text
+        elif intent == "pay_bill" and slots.get("amount"):
+            is_autofill_active = True
+            autofill = {
+                "type": "bill",
+                "biller": "k-electric",
+                "amount": slots.get("amount")
+            }
+            target = ["paybill-submit", "side-nav-bills", "mobile-nav-bills"]
+            last_intent = "pay_bill"
+            if detected_lang == "ur":
+                spoken_text = "میں نے بل کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم کریں۔"
+            else:
+                spoken_text = "I have filled in the bill payment details for you. Please review and tap Confirm to execute."
+            guidance = spoken_text
+        elif target:
+            guidance = resolve_guidance(FLOW_GUIDANCE, target[0], detected_lang)
+            canonical = INTENT_TO_FLOW.get(intent, intent)
+            if not guidance and canonical in NAV_GUIDANCE and (canonical, current_screen) not in GUIDED_STEPS:
+                guidance = resolve_guidance(NAV_GUIDANCE, canonical, detected_lang)
+            if guidance:
+                spoken_text = guidance
 
     audio_bytes = None
     if spoken_text:
@@ -1338,12 +1506,23 @@ async def handle_utterance(text: str):
         except Exception as tts_err:
             print(f"[tts] Synthesis note: {tts_err}")
 
+    confidence = intent_result.get("confidence", "high")
+
     if target:
-        await send_highlight(target, flow_guidance=spoken_text, audio_bytes=audio_bytes)
+        await send_highlight(
+            target,
+            flow_guidance=spoken_text,
+            audio_bytes=audio_bytes,
+            transcript=utterance,
+            intent=intent,
+            confidence=confidence,
+            autofill=autofill,
+        )
         last_highlighted = target[0]
 
-        if not guidance:
-            if intent not in FLOW_INTENTS:
+        canonical = INTENT_TO_FLOW.get(intent, intent)
+        if not guidance and not autofill:
+            if canonical not in FLOW_INTENTS:
                 last_intent = None
                 cancel_flow_advance()
         else:
@@ -1351,12 +1530,19 @@ async def handle_utterance(text: str):
     else:
         # Conversational / informative response without a specific UI target element
         # Deliver spoken neural audio and visual guidance banner so user is never ignored!
-        await send_highlight([], flow_guidance=spoken_text, audio_bytes=audio_bytes)
+        await send_highlight(
+            [],
+            flow_guidance=spoken_text,
+            audio_bytes=audio_bytes,
+            transcript=utterance,
+            intent=intent,
+            confidence=confidence,
+        )
         cancel_flow_advance()
 
 
 async def handler(websocket):
-    global current_screen, last_intent, _stt_language
+    global current_screen, last_intent, _stt_language, is_autofill_active, is_modal_open
     connected_clients.add(websocket)
     print(f"[+] Client connected. Total: {len(connected_clients)}")
     try:
@@ -1372,8 +1558,28 @@ async def handler(websocket):
                     await handle_utterance(text)
                 continue
             if data.get("type") == "AGENT_LANGUAGE":
-                _stt_language = data.get("language", "en")
+                _stt_language = data.get("language", "ur")
                 print(f"[lang] speech-to-text language set to: {_stt_language}")
+                continue
+            if data.get("type") == "AGENT_MODAL_STATE":
+                is_modal_open = bool(data.get("open", False))
+                if is_modal_open:
+                    cancel_flow_advance()
+                continue
+            if data.get("type") == "AGENT_STEP_COMPLETED":
+                cancel_flow_advance()
+                if last_intent and current_screen in FORM_SCREENS:
+                    target = decide_target(last_intent, current_screen)
+                    if target:
+                        guidance = resolve_guidance(FLOW_GUIDANCE, target[0], _stt_language)
+                        audio_bytes = None
+                        if guidance:
+                            try:
+                                audio_bytes = await synthesize_speech(guidance, language=_stt_language)
+                            except Exception:
+                                pass
+                        await send_highlight(target, flow_guidance=guidance, audio_bytes=audio_bytes)
+                        last_highlighted = target[0]
                 continue
             if data.get("type") == "AGENT_SCREEN_CHANGE":
                 current_screen = data.get("screen")
@@ -1381,6 +1587,11 @@ async def handler(websocket):
                 cancel_flow_advance()  # cancel any pending auto-advance
                 last_highlighted = None
                 print(f"[screen] -> {current_screen}")
+
+                if is_autofill_active:
+                    # Form autofill just navigated to review screen; preserve submit target and spoken voice
+                    is_autofill_active = False
+                    continue
 
                 # End the guided flow when the user reaches a success screen
                 if current_screen in FLOW_END_SCREENS:
@@ -1415,6 +1626,8 @@ async def handler(websocket):
                         last_highlighted = target[0]
                         schedule_flow_advance()
     except websockets.exceptions.ConnectionClosed:
+        pass
+    except Exception:
         pass
     finally:
         connected_clients.discard(websocket)

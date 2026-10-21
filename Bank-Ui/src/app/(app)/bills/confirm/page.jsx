@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CalendarClock, ShieldCheck } from 'lucide-react'
 import { agentProps } from '@/lib/agent'
@@ -10,6 +10,7 @@ import { billers } from '@/lib/mock-data'
 import { useAccounts, useBankStore } from '@/hooks/use-bank-store'
 import { Badge, Button, Card } from '@/components/ui'
 import { ReviewList } from '@/components/transfer/ReviewList'
+import { BiometricModal } from '@/components/common/BiometricModal'
 
 export default function BillConfirmPage() {
   const router = useRouter()
@@ -18,6 +19,8 @@ export default function BillConfirmPage() {
   const biller = billers.find((entry) => entry.id === bill.billerId)
   const fromAccount = accounts.find((entry) => entry.id === bill.fromAccountId)
   const amount = parseAmount(bill.amount)
+  const [authenticating, setAuthenticating] = useState(false)
+
   useEffect(() => {
     if (!biller || amount <= 0) router.replace(ROUTES.bills)
   }, [biller, amount, router])
@@ -34,6 +37,7 @@ export default function BillConfirmPage() {
     { label: 'Amount', value: formatCurrency(amount), agentId: 'paybill-confirm-amount', emphasis: true },
     { label: 'Due date', value: formatDate(biller.dueDate), agentId: 'paybill-confirm-due' },
   ]
+
   return (
     <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
       <Card>
@@ -77,13 +81,20 @@ export default function BillConfirmPage() {
           </Button>
           <Button
             fullWidth
-            onClick={() => router.push(ROUTES.billsSuccess)}
+            onClick={() => setAuthenticating(true)}
             {...agentProps('paybill-confirm-approve')}
           >
             Confirm &amp; pay
           </Button>
         </div>
       </Card>
+
+      <BiometricModal
+        open={authenticating}
+        title="Authorizing Utility Bill Payment"
+        onComplete={() => router.push(ROUTES.billsSuccess)}
+        onCancel={() => setAuthenticating(false)}
+      />
     </div>
   )
 }

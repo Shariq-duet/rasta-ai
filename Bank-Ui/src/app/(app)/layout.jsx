@@ -11,10 +11,7 @@ import { ScreenTitle } from '@/components/common/ScreenTitle'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { BottomNav } from '@/components/layout/BottomNav'
-import { AssistantFab } from '@/components/layout/AssistantFab'
-import { MicButton } from '@/components/layout/MicButton'
-import { LanguagePicker } from '@/components/layout/LanguagePicker'
-import { ChatModal } from '@/components/chat/ChatModal'
+import { VoiceHud } from '@/components/voice/VoiceHud'
 
 /**
  * One shell, two compositions — same components, routes and state throughout.
@@ -57,11 +54,8 @@ export default function AppLayout({ children }) {
           <ScreenTitle />
           {children}
         </main>
-        <AssistantFab />
-        <LanguagePicker />
-        <MicButton />
+        <VoiceHud />
         <BottomNav />
-        <ChatModal />
       </div>
     </div>
   )

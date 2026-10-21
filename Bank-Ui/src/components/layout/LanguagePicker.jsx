@@ -6,8 +6,8 @@ import { sendLanguageChoice } from '@/lib/agentBridge'
 import { useBankStore } from '@/hooks/use-bank-store'
 
 const LANGUAGES = [
-  { code: 'en', label: 'EN', fullLabel: 'English' },
   { code: 'ur', label: 'اُ', fullLabel: 'اردو' },
+  { code: 'en', label: 'EN', fullLabel: 'English' },
 ]
 
 /**

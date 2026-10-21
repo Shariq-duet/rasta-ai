@@ -8,6 +8,7 @@ import { ROUTES } from '@/lib/constants'
 import { formatCurrency } from '@/lib/format'
 import { useBankStore } from '@/hooks/use-bank-store'
 import { Avatar, EmptyState, FieldShell, Sheet } from '@/components/ui'
+import { clearHighlight, sendAgentModalState, sendAgentStepCompleted } from '@/lib/agentBridge'
 
 /** Field-shaped trigger that opens a sheet of saved payees. */
 export function BeneficiaryPicker({ value, onChange }) {
@@ -24,7 +25,11 @@ export function BeneficiaryPicker({ value, onChange }) {
         <button
           id="beneficiary-picker"
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            clearHighlight()
+            sendAgentModalState({ open: true, modal: 'beneficiary-sheet' })
+            setOpen(true)
+          }}
           aria-haspopup="dialog"
           aria-expanded={open}
           className="flex h-14 w-full items-center gap-3 rounded-xl border border-line bg-surface px-3 text-left transition-colors hover:border-brand-200"
@@ -56,7 +61,10 @@ export function BeneficiaryPicker({ value, onChange }) {
 
       <Sheet
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          sendAgentModalState({ open: false, modal: 'beneficiary-sheet' })
+          setOpen(false)
+        }}
         title="Choose a beneficiary"
         agentId="beneficiary-sheet"
       >
@@ -74,6 +82,8 @@ export function BeneficiaryPicker({ value, onChange }) {
                   type="button"
                   onClick={() => {
                     onChange(beneficiary.id)
+                    sendAgentModalState({ open: false, modal: 'beneficiary-sheet' })
+                    sendAgentStepCompleted('sendmoney-recipient-select')
                     setOpen(false)
                   }}
                   aria-pressed={beneficiary.id === value}

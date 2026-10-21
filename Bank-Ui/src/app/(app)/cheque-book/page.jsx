@@ -43,6 +43,16 @@ export default function ChequeBookPage() {
   useEffect(() => {
     broadcastScreen(submitted ? 'cheque-success-screen' : 'cheque-book-screen')
   }, [submitted])
+
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      const intent = e.detail?.intent
+      if (intent === 'stop_cheque') setTab('stop')
+      if (intent === 'request_cheque_book') setTab('request')
+    }
+    window.addEventListener('AGENT_UPDATE', handleUpdate)
+    return () => window.removeEventListener('AGENT_UPDATE', handleUpdate)
+  }, [])
   if (submitted) {
     const isRequest = submitted === 'request'
     return (

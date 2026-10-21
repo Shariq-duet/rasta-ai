@@ -17,7 +17,11 @@ import { AGENT_SCREEN_EVENT } from '@/lib/agent'
  * without the bridge.
  */
 
-const SOCKET_URL = 'ws://localhost:8765'
+const SOCKET_URL =
+  process.env.NEXT_PUBLIC_AGENT_SOCKET_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'ws://localhost:8765/ws'
+    : 'wss://rasta-ai-production.up.railway.app/ws')
 const HIGHLIGHT_CLASS = 'agent-highlight'
 /** A highlight clears on the next screen change, or after this long. */
 const HIGHLIGHT_DURATION_MS = 30_000
@@ -50,9 +54,12 @@ export function sendAgentAudio(base64Audio, mimeType) {
   send({ type: 'AGENT_AUDIO', audio: base64Audio, mimeType: mimeType || 'audio/webm' })
 }
 
+let currentLanguage = 'ur'
+
 /** Tell the agent which language the user will speak in. */
 export function sendLanguageChoice(language) {
-  send({ type: 'AGENT_LANGUAGE', language })
+  if (language) currentLanguage = language
+  send({ type: 'AGENT_LANGUAGE', language: currentLanguage })
 }
 
 function clearHighlight() {
@@ -147,6 +154,83 @@ function onScreenChange(event) {
   })
 }
 
+/** Send typed or simulated scenario utterance to the agent. */
+export function sendAgentUtterance(text) {
+  send({ type: 'AGENT_UTTERANCE', text })
+}
+
+/** Notify agent backend when a modal or sheet opens or closes. */
+export function sendAgentModalState(data) {
+  send({ type: 'AGENT_MODAL_STATE', ...data })
+}
+
+/** Notify agent backend when a guided form step is completed by the user. */
+export function sendAgentStepCompleted(step) {
+  send({ type: 'AGENT_STEP_COMPLETED', step })
+}
+
+export { clearHighlight }
+
+let currentAgentAudio = null
+let isAutofillAudioPlaying = false
+
+/** Immediately cancel any currently playing neural audio or browser speech. */
+export function stopAgentAudio() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel()
+  }
+  if (currentAgentAudio) {
+    try {
+      currentAgentAudio.pause()
+      currentAgentAudio.currentTime = 0
+    } catch {
+      // Ignore pause errors
+    }
+    currentAgentAudio = null
+  }
+  isAutofillAudioPlaying = false
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('AGENT_SPEECH_STATE', { detail: { speaking: false } }))
+  }
+}
+
+function playNeuralAudio(base64Audio, isAutofill = false, onEndCallback) {
+  if (!base64Audio || typeof window === 'undefined') return
+  try {
+    if (window.speechSynthesis) window.speechSynthesis.cancel()
+    if (currentAgentAudio) {
+      // Protect active smart form explanation voice from being overwritten by generic navigation audio
+      if (isAutofillAudioPlaying && !isAutofill) {
+        return
+      }
+      currentAgentAudio.pause()
+      currentAgentAudio.currentTime = 0
+    }
+    if (isAutofill) {
+      isAutofillAudioPlaying = true
+    }
+    const sound = new Audio('data:audio/mp3;base64,' + base64Audio)
+    currentAgentAudio = sound
+    window.dispatchEvent(new CustomEvent('AGENT_SPEECH_STATE', { detail: { speaking: true } }))
+    sound.addEventListener('ended', () => {
+      isAutofillAudioPlaying = false
+      window.dispatchEvent(new CustomEvent('AGENT_SPEECH_STATE', { detail: { speaking: false } }))
+      if (onEndCallback) onEndCallback()
+    })
+    sound.addEventListener('error', () => {
+      isAutofillAudioPlaying = false
+      window.dispatchEvent(new CustomEvent('AGENT_SPEECH_STATE', { detail: { speaking: false } }))
+    })
+    sound.play().catch((err) => {
+      console.warn('[bridge] Neural audio autoplay note:', err)
+      isAutofillAudioPlaying = false
+      window.dispatchEvent(new CustomEvent('AGENT_SPEECH_STATE', { detail: { speaking: false } }))
+    })
+  } catch (err) {
+    console.error('[bridge] Audio playback failed:', err)
+  }
+}
+
 function onSocketMessage(event) {
   let message
   try {
@@ -155,14 +239,25 @@ function onSocketMessage(event) {
     return // The agent protocol is JSON-only; anything else is ignored.
   }
   if (message?.type === 'AGENT_HIGHLIGHT') {
+    const isAutofill = Boolean(message.autofill)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('AGENT_UPDATE', { detail: message }))
+      if (message.autofill) {
+        window.dispatchEvent(new CustomEvent('AGENT_AUTOFILL', { detail: message.autofill }))
+      }
+    }
     if (Array.isArray(message.targetIds)) {
       highlightTargets(message.targetIds)
     } else if (message.targetId) {
       highlightTarget(message.targetId)
     }
-    // Speak step-by-step guidance (Urdu) if the agent included it
-    if (message.flowGuidance) {
-      speakFlowGuidance(message.flowGuidance)
+    // High-fidelity neural audio stream takes priority over browser robot synthesis
+    if (message.audio) {
+      playNeuralAudio(message.audio, isAutofill)
+    } else if (message.flowGuidance) {
+      if (!isAutofillAudioPlaying) {
+        speakFlowGuidance(message.flowGuidance)
+      }
     }
   }
   if (message?.type === 'AGENT_CLICK') clickTarget(message.targetId)
@@ -178,15 +273,11 @@ function clickTarget(targetId) {
 }
 
 /**
- * Speak flow-guidance text via the browser's Web Speech API.
- * Used for step-by-step instructions during send-money / pay-bill flows.
- * Falls back silently if speech synthesis is unavailable.
+ * Speak flow-guidance text via the browser's Web Speech API as fallback only.
  */
 function speakFlowGuidance(text) {
   if (!text || typeof window === 'undefined' || !window.speechSynthesis) return
   window.speechSynthesis.cancel() // stop any previous speech
-  // getVoices() is async — it may return empty the first time. Pre-loading
-  // and re-querying after voiceschanged ensures we always have voices.
   const trySpeak = () => {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'ur-PK'
@@ -200,7 +291,6 @@ function speakFlowGuidance(text) {
     trySpeak()
   } else {
     window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true })
-    // Also try immediately in case voiceschanged never fires
     setTimeout(trySpeak, 100)
   }
 }
@@ -228,6 +318,7 @@ function connect() {
   }
   socket.addEventListener('open', () => {
     reconnectAttempts = 0
+    send({ type: 'AGENT_LANGUAGE', language: currentLanguage })
     // A late-starting or restarted agent missed the last screen change —
     // catch it up with the screen the customer is on right now.
     if (window.__AGENT_SCREEN__) {

@@ -1,23 +1,19 @@
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { BANK_NAME, BANK_TAGLINE } from '@/lib/constants'
 import './globals.css'
 
-// Both faces are self-hosted and preloaded by next/font, so there is no
-// system-font flash before the webfont lands.
 const body = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-body',
   display: 'swap',
-  preload: true,
 })
 
-const display = Plus_Jakarta_Sans({
+const display = Inter({
   subsets: ['latin'],
   weight: ['600', '700', '800'],
   variable: '--font-display',
   display: 'swap',
-  preload: true,
 })
 
 export const metadata = {

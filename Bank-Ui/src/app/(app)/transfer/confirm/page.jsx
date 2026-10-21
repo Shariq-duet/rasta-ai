@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ShieldCheck, Zap } from 'lucide-react'
 import { agentProps } from '@/lib/agent'
@@ -9,6 +9,7 @@ import { formatCurrency, parseAmount } from '@/lib/format'
 import { useAccounts, useBankStore } from '@/hooks/use-bank-store'
 import { Badge, Button, Card } from '@/components/ui'
 import { ReviewList } from '@/components/transfer/ReviewList'
+import { BiometricModal } from '@/components/common/BiometricModal'
 
 export default function TransferConfirmPage() {
   const router = useRouter()
@@ -21,6 +22,8 @@ export default function TransferConfirmPage() {
   const toAccount = accounts.find((entry) => entry.id === transfer.toAccountId)
   const isIbft = transfer.mode === 'ibft'
   const raast = isIbft && (beneficiary?.raastEnabled ?? false)
+  const [authenticating, setAuthenticating] = useState(false)
+
   // A refresh clears the draft, so send the customer back to step 1.
   useEffect(() => {
     if (amount <= 0) router.replace(ROUTES.transfer)
@@ -55,6 +58,7 @@ export default function TransferConfirmPage() {
   if (transfer.note.trim()) {
     items.push({ label: 'Note', value: transfer.note, agentId: 'sendmoney-confirm-note' })
   }
+
   return (
     <div className="flex flex-col gap-4 lg:mx-auto lg:w-full lg:max-w-2xl">
       <Card>
@@ -96,13 +100,20 @@ export default function TransferConfirmPage() {
           </Button>
           <Button
             fullWidth
-            onClick={() => router.push(ROUTES.transferSuccess)}
+            onClick={() => setAuthenticating(true)}
             {...agentProps('sendmoney-confirm-approve')}
           >
             Confirm &amp; send
           </Button>
         </div>
       </Card>
+
+      <BiometricModal
+        open={authenticating}
+        title="Authorizing IBFT Transfer"
+        onComplete={() => router.push(ROUTES.transferSuccess)}
+        onCancel={() => setAuthenticating(false)}
+      />
     </div>
   )
 }

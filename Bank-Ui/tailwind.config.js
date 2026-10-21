@@ -110,6 +110,8 @@ const config = {
         'slide-up': 'slide-up 260ms cubic-bezier(0.22,1,0.36,1) both',
         'sheet-up': 'sheet-up 280ms cubic-bezier(0.22,1,0.36,1) both',
         'pop-in': 'pop-in 380ms cubic-bezier(0.22,1,0.36,1) both',
+        'scale-in': 'pop-in 240ms ease-out both',
+        'spin-slow': 'spin 4s linear infinite',
         shimmer: 'shimmer 1.6s infinite',
       },
     },
