@@ -160,10 +160,14 @@ export function VoiceHud() {
 
         if (intent === 'qr_pay') {
           navigateIfDifferent(ROUTES.qrPay)
-        } else if (intent === 'manage_card') {
+        } else if (intent === 'manage_card' || intent === 'view_cards') {
           navigateIfDifferent(ROUTES.cards)
         } else if (intent === 'emergency_card_freeze') {
-          navigateIfDifferent(ROUTES.card('debit-visa'))
+          navigateIfDifferent(ROUTES.card('card-debit-visa'))
+        } else if (intent === 'view_profile' || intent === 'human_support_helpline') {
+          navigateIfDifferent(ROUTES.profile)
+        } else if (intent === 'view_notifications') {
+          navigateIfDifferent(ROUTES.notifications)
         } else if (intent === 'request_cheque_book') {
           navigateIfDifferent(ROUTES.chequeBook)
         } else if (intent === 'stop_cheque') {
@@ -208,11 +212,14 @@ export function VoiceHud() {
           )
           if (found) matchedId = found.id
         }
-        if (!matchedId && beneficiaries.length > 0) {
-          matchedId = beneficiaries[0].id
+        const currentTransfer = useBankStore.getState().transfer
+        if (!matchedId) {
+          matchedId = currentTransfer?.beneficiaryId || (beneficiaries.length > 0 ? beneficiaries[0].id : null)
         }
 
-        const cleanAmount = String(autofill.amount || '5000').replace(/[^0-9.]/g, '')
+        const cleanAmount = autofill.amount
+          ? String(autofill.amount).replace(/[^0-9.]/g, '')
+          : (currentTransfer?.amount || '')
 
         setTransfer({
           beneficiaryId: matchedId,

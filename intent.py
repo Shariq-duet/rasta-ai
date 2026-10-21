@@ -163,7 +163,7 @@ def classify_with_groq(transcript: str, current_screen: str) -> dict:
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.3,
-        "max_tokens": 500,
+        "max_tokens": 1500,
     }
 
     response = requests.post(

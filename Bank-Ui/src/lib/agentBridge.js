@@ -245,6 +245,9 @@ function onSocketMessage(event) {
       if (message.autofill) {
         window.dispatchEvent(new CustomEvent('AGENT_AUTOFILL', { detail: message.autofill }))
       }
+      if (message.intent === 'cancel_or_back') {
+        window.dispatchEvent(new CustomEvent('AGENT_CANCEL', { detail: message }))
+      }
     }
     if (Array.isArray(message.targetIds)) {
       highlightTargets(message.targetIds)
@@ -260,12 +263,21 @@ function onSocketMessage(event) {
       }
     }
   }
-  if (message?.type === 'AGENT_CLICK') clickTarget(message.targetId)
+  if (message?.type === 'AGENT_CLICK') clickTarget(message.targetId || message.targetIds)
 }
 
 function clickTarget(targetId) {
-  if (typeof targetId !== 'string' || !SAFE_AGENT_ID.test(targetId)) return
-  const element = document.querySelector(`[data-agent-id="${targetId}"]`)
+  let element = null
+  if (Array.isArray(targetId)) {
+    for (const id of targetId) {
+      if (typeof id === 'string' && SAFE_AGENT_ID.test(id)) {
+        element = document.querySelector(`[data-agent-id="${id}"]`)
+        if (element) break
+      }
+    }
+  } else if (typeof targetId === 'string' && SAFE_AGENT_ID.test(targetId)) {
+    element = document.querySelector(`[data-agent-id="${targetId}"]`)
+  }
   if (!element) return
   element.classList.add('agent-click')
   element.click()

@@ -547,6 +547,7 @@ FLOW_INTENTS = {
 }
 
 INTENT_TO_FLOW = {
+    "view_cards": "manage_card",
     "biller_guidance_electricity": "pay_bill",
     "biller_guidance_gas": "pay_bill",
     "biller_guidance_internet": "pay_bill",
@@ -559,6 +560,7 @@ INTENT_TO_FLOW = {
 connected_clients = set()
 current_screen = None  # the screen the browser last reported
 last_intent = None  # preserved across screens so "next" advances a guided flow
+active_slots = {}  # preserved across turns for multi-turn conversational slot memory (e.g. "Send to Hamza" -> "5000 rupees")
 flow_position = {}  # (intent, screen) -> next step index in GUIDED_STEPS
 
 AUTO_ADVANCE_DELAY = 0  # Event-driven: advances on user clicks, modal selections, or 'next' commands
@@ -647,7 +649,7 @@ def decide_target(intent: str, screen: str):
             return ["statements-totals"]
         return NAV_STATEMENTS
     if intent == "view_cards":
-        if screen in ("cards-screen", "Dashboard", "CardManagement"):
+        if screen in ("cards-screen", "CardManagement"):
             return ["cards-open-card-debit-visa", "card_management"]
         return NAV_CARDS
     if intent == "view_analytics":
@@ -808,14 +810,23 @@ async def speak_reply(text: str) -> None:
         print(f"[tts] failed: {error}")
 
 
-async def send_click(target_id: str):
-    """Send AGENT_CLICK so the browser simulates a click on the target."""
+async def send_click(target_id):
+    """Send AGENT_CLICK so the browser simulates a click on the target (single ID or list of candidates)."""
     if not connected_clients:
         print("[click] no browser connected")
         return
-    message = json.dumps({"type": "AGENT_CLICK", "targetId": target_id})
+    if isinstance(target_id, list):
+        message = json.dumps({"type": "AGENT_CLICK", "targetIds": target_id})
+    else:
+        message = json.dumps({"type": "AGENT_CLICK", "targetId": target_id})
     await asyncio.gather(*(_client_send(client, message) for client in list(connected_clients)))
     print(f"[click] -> {target_id}")
+
+
+async def _delayed_cancel_click(target_ids):
+    """Wait briefly so the user sees the highlight indicator, then simulate click to navigate home."""
+    await asyncio.sleep(0.4)
+    await send_click(target_ids)
 
 
 def transcribe_file(path: str) -> str:
@@ -1204,7 +1215,7 @@ async def _auto_advance_flow():
 
 
 async def handle_utterance(text: str):
-    global last_intent, _stt_language
+    global last_intent, _stt_language, active_slots, is_autofill_active
     utterance = text.strip()
     if not utterance:
         return
@@ -1238,6 +1249,7 @@ async def handle_utterance(text: str):
             "reply": reply_text
         }
         last_intent = None
+        active_slots.clear()
         cancel_flow_advance()
     # 3. Repeat previous instruction
     elif is_repeat_query(utterance):
@@ -1395,6 +1407,26 @@ async def handle_utterance(text: str):
             last_intent = canonical
 
     intent = intent_result["intent"]
+    slots = intent_result.get("slots") or {}
+
+    # Multi-turn slot memory across utterances:
+    canonical = INTENT_TO_FLOW.get(intent, intent)
+    if canonical in ("send_money", "pay_bill") or (last_intent in ("send_money", "pay_bill") and (slots.get("amount") or slots.get("recipient") or slots.get("biller"))):
+        if not intent or intent in ("unknown", "next_step", "amount_guidance", "recipient_guidance"):
+            intent = last_intent or canonical
+            canonical = INTENT_TO_FLOW.get(intent, intent)
+            intent_result["intent"] = intent
+        # Inherit previously provided slots across turns
+        for k, v in active_slots.items():
+            if v and not slots.get(k):
+                slots[k] = v
+        # Remember all newly mentioned slots
+        for k, v in slots.items():
+            if v:
+                active_slots[k] = v
+    elif intent == "cancel_or_back":
+        active_slots.clear()
+
     print(f"[intent] {json.dumps(intent_result, ensure_ascii=False)}")
 
     if intent == "unknown":
@@ -1416,11 +1448,9 @@ async def handle_utterance(text: str):
 
     target = decide_target(intent, current_screen)
     spoken_text = intent_result.get("reply", "")
-    slots = intent_result.get("slots") or {}
     autofill = None
     guidance = None
 
-    global is_autofill_active
     # Smart Entity Extraction & Form Pre-fill with strict Human Confirmation safety
     if intent == "send_money" and (slots.get("recipient") or slots.get("amount")):
         is_autofill_active = True
@@ -1430,13 +1460,28 @@ async def handle_utterance(text: str):
             "amount": slots.get("amount"),
             "note": slots.get("note") or "Voice Transfer"
         }
-        target = ["sendmoney-submit"]
-        recip_display = slots.get("recipient") or "your beneficiary"
-        amt_display = f"PKR {slots.get('amount')}" if slots.get("amount") else ""
-        if detected_lang == "ur":
-            spoken_text = f"میں نے {slots.get('recipient') or ''} کے لیے رقم کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم پر ٹیپ کریں۔"
-        else:
-            spoken_text = f"I have set up the transfer of {amt_display} for {recip_display}. Please review and tap Confirm to execute."
+        if slots.get("recipient") and slots.get("amount"):
+            target = ["sendmoney-submit"]
+            recip_display = slots.get("recipient")
+            amt_display = f"PKR {slots.get('amount')}"
+            if detected_lang == "ur":
+                spoken_text = f"میں نے {recip_display} کے لیے {amt_display} کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم پر ٹیپ کریں۔"
+            else:
+                spoken_text = f"I have set up the transfer of {amt_display} for {recip_display}. Please review and tap Confirm to execute."
+        elif slots.get("recipient"):
+            target = ["sendmoney-amount-input", "sendmoney-submit"]
+            recip_display = slots.get("recipient")
+            if detected_lang == "ur":
+                spoken_text = f"میں نے {recip_display} کو منتخب کر لیا ہے۔ اب بتائیے کتنی رقم بھیجنا چاہتے ہیں؟"
+            else:
+                spoken_text = f"I have selected {recip_display}. How much would you like to send?"
+        elif slots.get("amount"):
+            target = ["sendmoney-recipient-select", "sendmoney-submit"]
+            amt_display = f"PKR {slots.get('amount')}"
+            if detected_lang == "ur":
+                spoken_text = f"میں نے {amt_display} درج کر دیا ہے۔ برائے مہربانی وصول کنندہ منتخب کریں یا نام بتائیں۔"
+            else:
+                spoken_text = f"I have entered {amt_display}. Please select or state your recipient."
         guidance = spoken_text
     else:
         # Check if bill payment or specific biller requested
@@ -1521,7 +1566,12 @@ async def handle_utterance(text: str):
         last_highlighted = target[0]
 
         canonical = INTENT_TO_FLOW.get(intent, intent)
-        if not guidance and not autofill:
+        if intent == "cancel_or_back":
+            last_intent = None
+            active_slots.clear()
+            cancel_flow_advance()
+            asyncio.create_task(_delayed_cancel_click(NAV_HOME))
+        elif not guidance and not autofill:
             if canonical not in FLOW_INTENTS:
                 last_intent = None
                 cancel_flow_advance()
@@ -1608,6 +1658,7 @@ async def handler(websocket):
                             await send_highlight(home_target, flow_guidance=end_guidance, audio_bytes=audio_bytes)
                             last_highlighted = home_target[0]
                     last_intent = None
+                    active_slots.clear()
 
                 # Auto-guide: if user reaches a form screen with pending intent
                 if (last_intent
