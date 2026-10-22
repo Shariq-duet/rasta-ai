@@ -16,6 +16,13 @@ import { ContactRail } from '@/components/dashboard/ContactRail'
 import { TransactionList } from '@/components/dashboard/TransactionList'
 import { ServiceGrid } from '@/components/services/ServiceGrid'
 
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 export default function DashboardPage() {
   const account = useSelectedAccount()
   const recent = useAccountTransactions(account.id, 6)
@@ -26,7 +33,7 @@ export default function DashboardPage() {
         eyebrow={formatFullDate(TODAY)}
         title={
           <>
-            Good morning, {firstName} <span className="text-accent-500">✦</span>
+            {getGreeting()}, {firstName} <span className="text-accent-500">✦</span>
           </>
         }
       />

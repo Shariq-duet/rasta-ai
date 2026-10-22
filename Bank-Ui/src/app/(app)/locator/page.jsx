@@ -20,6 +20,7 @@ function formatDistance(km) {
 export default function LocatorPage() {
   const [tab, setTab] = useState('all')
   const [query, setQuery] = useState('')
+  const [selectedId, setSelectedId] = useState(branches[0]?.id)
   const results = useMemo(() => {
     const term = query.trim().toLowerCase()
     return branches
@@ -33,13 +34,14 @@ export default function LocatorPage() {
       )
       .sort((a, b) => a.distanceKm - b.distanceKm)
   }, [tab, query])
+  const activeBranch = branches.find((b) => b.id === selectedId) || results[0]
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <PageHeader eyebrow="Find us" subtitle="Branches and ATMs near you. Locations shown are illustrative." />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-start lg:gap-6">
         <div className="flex flex-col gap-4 lg:sticky lg:top-[88px]">
-          <MapPlaceholder />
+          <MapPlaceholder activeBranch={activeBranch} />
 
           <div className="relative">
             <label htmlFor="locator-search" className="sr-only">
@@ -75,9 +77,19 @@ export default function LocatorPage() {
             </Card>
           ) : (
             <ul className="flex flex-col gap-2">
-              {results.map((branch) => (
-                <li key={branch.id}>
-                  <Card className="p-3.5" {...agentProps(`locator-result-${branch.id}`)}>
+              {results.map((branch) => {
+                const isSelected = branch.id === activeBranch?.id
+                return (
+                  <li key={branch.id}>
+                    <Card
+                      onClick={() => setSelectedId(branch.id)}
+                      className={`p-3.5 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? 'ring-2 ring-brand-500/80 bg-brand-50/20 shadow-md'
+                          : 'hover:bg-canvas'
+                      }`}
+                      {...agentProps(`locator-result-${branch.id}`)}
+                    >
                     <div className="flex items-start gap-3">
                       <span
                         className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${branch.type === 'branch' ? 'bg-brand-50 text-brand-600' : 'bg-accent-100 text-accent-600'}`}
@@ -122,8 +134,9 @@ export default function LocatorPage() {
                     </div>
                   </Card>
                 </li>
-              ))}
-            </ul>
+              )
+            })}
+          </ul>
           )}
         </div>
       </div>

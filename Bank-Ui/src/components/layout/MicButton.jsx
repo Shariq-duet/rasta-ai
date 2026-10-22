@@ -5,8 +5,8 @@ import { Loader2, Mic, Square } from 'lucide-react'
 import { sendAgentAudio } from '@/lib/agentBridge'
 import { useBankStore } from '@/hooks/use-bank-store'
 
-/** Recording auto-stops after this long — one breath is enough for a command. */
-const MAX_RECORDING_MS = 5000
+/** Recording auto-stops after this long — enough for a full bilingual sentence. */
+const MAX_RECORDING_MS = 10000
 
 /**
  * In-app microphone button: records up to 5 s of speech and ships it to the
@@ -62,7 +62,7 @@ export function MicButton() {
           const base64 = String(reader.result).split(',')[1] || ''
           sendAgentAudio(base64, blob.type)
           // Back to ready once the agent has had time to pick it up.
-          setTimeout(() => setState('idle'), 2000)
+          setTimeout(() => setState('idle'), 5000)
         }
         reader.readAsDataURL(blob)
       }

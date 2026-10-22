@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { initAgentBridge } from '@/lib/agentBridge'
 import { ROUTES } from '@/lib/constants'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,6 +23,7 @@ import { VoiceHud } from '@/components/voice/VoiceHud'
  */
 export default function AppLayout({ children }) {
   const router = useRouter()
+  const pathname = usePathname()
   const { isAuthenticated, hydrated } = useAuth()
   useEffect(() => {
     if (hydrated && !isAuthenticated) router.replace(ROUTES.login)
@@ -52,7 +53,9 @@ export default function AppLayout({ children }) {
         <TopBar />
         <main className="mx-auto w-full flex-1 px-4 pb-10 pt-5 lg:max-w-[var(--content-width)] lg:px-8 lg:pb-16 lg:pt-8">
           <ScreenTitle />
-          {children}
+          <div key={pathname} className="animate-fade-in">
+            {children}
+          </div>
         </main>
         <VoiceHud />
         <BottomNav />

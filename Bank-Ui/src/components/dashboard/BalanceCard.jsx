@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowUpRight, Eye, EyeOff } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Eye, EyeOff, Minus } from 'lucide-react'
 import { agentProps } from '@/lib/agent'
 import { formatCurrency, formatPercent } from '@/lib/format'
 import { useBankStore, useSelectedAccount } from '@/hooks/use-bank-store'
@@ -33,8 +33,22 @@ export function BalanceCard() {
       <div className="relative flex items-start justify-between gap-3">
         <AccountSwitcher />
         <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-2xs font-semibold text-accent-200">
-          <ArrowUpRight size={12} aria-hidden />
-          {formatPercent(account.changePercent)}
+          {account.changePercent > 0 ? (
+            <>
+              <ArrowUpRight size={12} aria-hidden />
+              {formatPercent(account.changePercent)}
+            </>
+          ) : account.changePercent < 0 ? (
+            <>
+              <ArrowDownRight size={12} aria-hidden />
+              {formatPercent(account.changePercent)}
+            </>
+          ) : (
+            <>
+              <Minus size={12} aria-hidden />
+              <span>0%</span>
+            </>
+          )}
         </span>
       </div>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { TrendingDown } from 'lucide-react'
+import { TrendingDown, TrendingUp } from 'lucide-react'
 import { agentProps } from '@/lib/agent'
 import { formatCurrency } from '@/lib/format'
 import { spendingCategories, TODAY } from '@/lib/mock-data'
@@ -17,6 +17,10 @@ export default function AnalyticsPage() {
   const spent = spendingCategories.reduce((total, category) => total + category.amount, 0)
   const budgetPercent = Math.round((spent / MONTHLY_BUDGET) * 100)
   const thisMonth = TODAY.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  const priorMonthSpend = 193_150
+  const spendDiff = spent - priorMonthSpend
+  const diffPercent = Math.abs(Math.round((spendDiff / priorMonthSpend) * 1000) / 10)
+  const isDecrease = spendDiff <= 0
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <PageHeader eyebrow={thisMonth} title="Spending insights" subtitle={account.nickname} />
@@ -29,9 +33,13 @@ export default function AnalyticsPage() {
                 <p className="type-display text-[1.625rem]">
                   {formatCurrency(spent)}
                 </p>
-                <p className="mt-1.5 flex items-center gap-1 text-[0.6875rem] font-semibold text-positive-500">
-                  <TrendingDown size={14} aria-hidden />
-                  12.8% less than last month
+                <p className={`mt-1.5 flex items-center gap-1 text-[0.6875rem] font-semibold ${isDecrease ? 'text-positive-500' : 'text-danger-500'}`}>
+                  {isDecrease ? (
+                    <TrendingDown size={14} aria-hidden />
+                  ) : (
+                    <TrendingUp size={14} aria-hidden />
+                  )}
+                  {diffPercent}% {isDecrease ? 'less than last month' : 'more than last month'}
                 </p>
               </div>
               <SpendingDonut

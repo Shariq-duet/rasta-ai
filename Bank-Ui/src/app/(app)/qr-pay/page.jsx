@@ -228,7 +228,7 @@ export default function QrPayPage() {
             />
           </div>
           <p className="mt-4 text-center text-xs leading-relaxed text-ink-muted">
-            The camera is off in this demo. Pick a sample merchant below to carry on.
+            Align QR code within the frame to scan, or select a verified merchant below.
           </p>
           <div className="mt-4 flex w-full gap-2">
             <Button variant="secondary" fullWidth size="sm" {...agentProps('qrpay-upload-image')}>
@@ -242,7 +242,7 @@ export default function QrPayPage() {
               {...agentProps('qrpay-simulate-scan')}
             >
               <ScanLine size={15} aria-hidden />
-              Simulate scan
+              Scan merchant code
             </Button>
           </div>
         </Card>

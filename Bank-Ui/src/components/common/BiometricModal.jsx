@@ -27,6 +27,13 @@ export function BiometricModal({ open, title = 'Authorizing Transfer', onComplet
     }
   }, [open, onComplete])
 
+  useEffect(() => {
+    if (!open) return
+    const handleCancel = () => onCancel?.()
+    window.addEventListener('AGENT_CANCEL', handleCancel)
+    return () => window.removeEventListener('AGENT_CANCEL', handleCancel)
+  }, [open, onCancel])
+
   if (!open) return null
 
   return (
