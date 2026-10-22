@@ -127,6 +127,14 @@ const DEMO_SCENARIOS = [
     category: 'Fraud Defense',
     description: 'Flags unusual high-value transfer, triggers risk alert, and requires human confirmation.',
   },
+  {
+    id: 'unknown-payee',
+    title: 'Unregistered Payee Defense',
+    urduTitle: 'نامعلوم وصول کنندہ الرٹ',
+    utterance: 'سلیمان کو 5000 روپے بھیجو',
+    category: 'Safety Guardrail',
+    description: 'Detects that Suleiman is not in saved beneficiaries and prompts to add or review.',
+  },
 ]
 
 export function VoiceHud() {
@@ -237,7 +245,7 @@ export function VoiceHud() {
 
       if (autofill.type === 'transfer') {
         let matchedId = null
-        if (autofill.recipient) {
+        if (autofill.recipient && !autofill.recipientUnknown) {
           const search = autofill.recipient.toLowerCase().trim()
           const found = beneficiaries.find(
             (b) =>
@@ -248,7 +256,8 @@ export function VoiceHud() {
           if (found) matchedId = found.id
         }
         const currentTransfer = useBankStore.getState().transfer
-        if (!matchedId) {
+        // If recipient is unknown, do NOT pick a fallback beneficiary
+        if (!matchedId && !autofill.recipientUnknown) {
           matchedId = currentTransfer?.beneficiaryId || (beneficiaries.length > 0 ? beneficiaries[0].id : null)
         }
 
@@ -449,6 +458,21 @@ export function VoiceHud() {
               </div>
             )}
 
+            {/* Unregistered Payee Warning */}
+            {latestAgentMessage?.ai_meta?.riskLevel === 'UNKNOWN_BENEFICIARY' && (
+              <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50/95 p-2.5 text-amber-950 shadow-xs animate-fade-in">
+                <ShieldAlert size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-2xs">
+                  <span className="font-bold uppercase tracking-wider text-amber-900 block">
+                    Unregistered Payee Alert
+                  </span>
+                  <span className="text-amber-800">
+                    {latestAgentMessage.ai_meta.riskReason || 'Recipient is not in your registered beneficiaries.'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Recognized User Speech */}
             {latestAgentMessage.transcript && (
               <div className="mt-2 text-xs text-ink-muted" dir="auto">
@@ -605,6 +629,10 @@ export function VoiceHud() {
                     {latestAgentMessage?.ai_meta?.riskLevel === 'HIGH_ANOMALY' ? (
                       <span className="flex items-center gap-1 text-2xs font-bold text-amber-800 bg-amber-100 rounded px-2 py-0.5">
                         <ShieldAlert size={12} className="text-amber-600" /> High Anomaly
+                      </span>
+                    ) : latestAgentMessage?.ai_meta?.riskLevel === 'UNKNOWN_BENEFICIARY' ? (
+                      <span className="flex items-center gap-1 text-2xs font-bold text-amber-800 bg-amber-100 rounded px-2 py-0.5">
+                        <ShieldAlert size={12} className="text-amber-600" /> Unknown Payee
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-2xs font-bold text-emerald-800 bg-emerald-100 rounded px-2 py-0.5">

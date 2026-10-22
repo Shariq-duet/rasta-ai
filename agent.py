@@ -1051,6 +1051,56 @@ BILLER_CATALOG = {
 }
 
 
+BENEFICIARY_CATALOG = {
+    "hamza-iqbal": {
+        "id": "hamza-iqbal",
+        "name": "Hamza Iqbal",
+        "name_ur": "حمزہ اقبال",
+        "aliases": ["hamza", "حمزہ", "hamza iqbal"]
+    },
+    "sana-mahmood": {
+        "id": "sana-mahmood",
+        "name": "Sana Mahmood",
+        "name_ur": "ثناء محمود",
+        "aliases": ["sana", "ثناء", "sana mahmood"]
+    },
+    "bilal-rehman": {
+        "id": "bilal-rehman",
+        "name": "Bilal ur Rehman",
+        "name_ur": "بلال الرحمان",
+        "aliases": ["bilal", "بلال", "bilal ur rehman", "bilal rehman"]
+    },
+    "nadia-farooq": {
+        "id": "nadia-farooq",
+        "name": "Nadia Farooq",
+        "name_ur": "نادیہ فاروق",
+        "aliases": ["nadia", "نادیہ", "nadia farooq"]
+    },
+    "usman-tariq": {
+        "id": "usman-tariq",
+        "name": "Usman Tariq",
+        "name_ur": "عثمان طارق",
+        "aliases": ["usman", "عثمان", "usman tariq"]
+    }
+}
+
+
+def match_beneficiary(recipient_name):
+    """Match extracted recipient name against registered saved beneficiaries."""
+    if not recipient_name:
+        return None
+    r_clean = str(recipient_name).lower().strip()
+    for b_id, b_data in BENEFICIARY_CATALOG.items():
+        b_name_clean = b_data["name"].lower()
+        if b_name_clean in r_clean or r_clean in b_name_clean:
+            return b_data
+        for alias in b_data["aliases"]:
+            alias_clean = alias.lower()
+            if alias_clean in r_clean or r_clean in alias_clean:
+                return b_data
+    return None
+
+
 def is_refusal_query(text: str) -> bool:
     """Check if user asks the agent to autonomously execute an action without human confirmation."""
     # If user provides details for a transaction (recipient, amount, or biller),
@@ -1502,13 +1552,8 @@ async def handle_utterance(text: str):
 
     # Smart Entity Extraction & Form Pre-fill with strict Human Confirmation safety
     if intent == "send_money" and (slots.get("recipient") or slots.get("amount")):
-        is_autofill_active = True
-        autofill = {
-            "type": "transfer",
-            "recipient": slots.get("recipient"),
-            "amount": slots.get("amount"),
-            "note": slots.get("note") or "Voice Transfer"
-        }
+        raw_recip = slots.get("recipient")
+        matched_b = match_beneficiary(raw_recip) if raw_recip else None
 
         # Financial Anomaly / Smart Scam Shield Check (> 25,000 PKR threshold)
         if slots.get("amount"):
@@ -1520,9 +1565,34 @@ async def handle_utterance(text: str):
             except Exception:
                 pass
 
-        if slots.get("recipient") and slots.get("amount"):
+        if raw_recip and not matched_b:
+            # Recipient provided but NOT found in registered beneficiaries
+            is_autofill_active = True
+            risk_level = "UNKNOWN_BENEFICIARY"
+            risk_reason = f"'{raw_recip}' is not in your registered beneficiaries"
+            target = ["sendmoney-recipient-select", "side-nav-transfers", "mobile-nav-transfers"]
+            if detected_lang == "ur":
+                spoken_text = f"{raw_recip} آپ کے محفوظ کردہ بینیفشریز میں موجود نہیں ہے۔ کیا آپ نیا بینیفشری شامل کرنا چاہتے ہیں؟"
+            else:
+                spoken_text = f"{raw_recip} is not in your saved beneficiaries list. Would you like to add a new beneficiary?"
+            autofill = {
+                "type": "transfer",
+                "recipient": raw_recip,
+                "recipientUnknown": True,
+                "amount": slots.get("amount"),
+                "note": slots.get("note") or "Voice Transfer"
+            }
+        elif matched_b and slots.get("amount"):
+            is_autofill_active = True
+            autofill = {
+                "type": "transfer",
+                "recipient": matched_b["name"],
+                "beneficiaryId": matched_b["id"],
+                "amount": slots.get("amount"),
+                "note": slots.get("note") or "Voice Transfer"
+            }
             target = ["sendmoney-submit"]
-            recip_display = slots.get("recipient")
+            recip_display = matched_b["name_ur"] if detected_lang == "ur" else matched_b["name"]
             amt_display = f"PKR {slots.get('amount')}"
             if risk_level == "HIGH_ANOMALY":
                 if detected_lang == "ur":
@@ -1534,14 +1604,29 @@ async def handle_utterance(text: str):
                     spoken_text = f"میں نے {recip_display} کے لیے {amt_display} کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم پر ٹیپ کریں۔"
                 else:
                     spoken_text = f"I have set up the transfer of {amt_display} for {recip_display}. Please review and tap Confirm to execute."
-        elif slots.get("recipient"):
+        elif matched_b:
+            is_autofill_active = True
+            autofill = {
+                "type": "transfer",
+                "recipient": matched_b["name"],
+                "beneficiaryId": matched_b["id"],
+                "amount": None,
+                "note": slots.get("note") or "Voice Transfer"
+            }
             target = ["sendmoney-amount-input", "sendmoney-submit"]
-            recip_display = slots.get("recipient")
+            recip_display = matched_b["name_ur"] if detected_lang == "ur" else matched_b["name"]
             if detected_lang == "ur":
                 spoken_text = f"میں نے {recip_display} کو منتخب کر لیا ہے۔ اب بتائیے کتنی رقم بھیجنا چاہتے ہیں؟"
             else:
                 spoken_text = f"I have selected {recip_display}. How much would you like to send?"
         elif slots.get("amount"):
+            is_autofill_active = True
+            autofill = {
+                "type": "transfer",
+                "recipient": None,
+                "amount": slots.get("amount"),
+                "note": slots.get("note") or "Voice Transfer"
+            }
             target = ["sendmoney-recipient-select", "sendmoney-submit"]
             amt_display = f"PKR {slots.get('amount')}"
             if risk_level == "HIGH_ANOMALY":
@@ -1556,29 +1641,78 @@ async def handle_utterance(text: str):
                     spoken_text = f"I have entered {amt_display}. Please select or state your recipient."
         guidance = spoken_text
     elif intent == "read_screen":
-        if current_screen in ("home-screen", "Dashboard"):
+        s = str(current_screen or "").lower()
+        if any(x in s for x in ["home", "dashboard"]):
             spoken_text = (
-                "آپ کے اکاؤنٹ میں 2 لاکھ 45 ہزار روپے موجود ہیں۔ آخری ٹرانزیکشن 500 روپے کی فوڈ پانڈا پر ہوئی تھی۔"
+                "آپ ہوم ڈیش بورڈ پر ہیں۔ آپ کے اکاؤنٹ میں 2 لاکھ 45 ہزار روپے موجود ہیں اور آخری ٹرانزیکشن 1,340 روپے کی فوڈ پانڈا پر ہوئی تھی۔"
                 if detected_lang == "ur"
-                else "Your account balance is 245,000 rupees. Your last transaction was 500 rupees at Foodpanda."
+                else "You are on the Home Dashboard. Your account balance is 245,000 rupees and your last transaction was 1,340 rupees at Foodpanda."
             )
-        elif current_screen in ("statements-screen", "Statements"):
+        elif any(x in s for x in ["statement"]):
             spoken_text = (
-                "اس مہینے آپ کی کل آمدنی 1 لاکھ 20 ہزار اور کل خرچ 45 ہزار روپے رہا ہے۔"
+                "آپ اسٹیٹمنٹس کے پیج پر ہیں۔ اس مہینے آپ کی کل آمدنی 1 لاکھ 20 ہزار اور کل خرچ 45 ہزار روپے رہا ہے۔"
                 if detected_lang == "ur"
-                else "This month your total inflow is 120,000 rupees and total spend is 45,000 rupees."
+                else "You are on Statements. Your total monthly inflow is 120,000 rupees and total outflow is 45,000 rupees."
             )
-        elif current_screen in ("cards-screen", "CardManagement", "card-detail-screen"):
+        elif any(x in s for x in ["card"]):
             spoken_text = (
-                "آپ کا ویزا ڈیبٹ کارڈ ایکٹیو ہے جس کی روزانہ لمٹ 50 ہزار روپے ہے۔"
+                "آپ کارڈ مینجمنٹ پر ہیں۔ آپ کا ویزا ڈیبٹ کارڈ ایکٹیو ہے جس کی روزانہ لمٹ 50 ہزار روپے ہے۔"
                 if detected_lang == "ur"
-                else "Your Visa Debit Card is active with a daily limit of 50,000 rupees."
+                else "You are on Card Management. Your Visa Debit Card is active with a daily spending limit of 50,000 rupees."
+            )
+        elif any(x in s for x in ["bill"]):
+            spoken_text = (
+                "آپ بل پیمنٹس کے پیج پر ہیں۔ آپ کے پاس کے-الیکٹرک، سوئی گیس، اور پی ٹی سی ایل کے بل موجود ہیں جن میں کے-الیکٹرک کا بل جلد ڈیو ہے۔"
+                if detected_lang == "ur"
+                else "You are on Bill Payments. You have K-Electric, SSGC, and PTCL billers available, with K-Electric due soon."
+            )
+        elif any(x in s for x in ["beneficiar"]):
+            spoken_text = (
+                "آپ بینیفشریز کی فہرست پر ہیں۔ آپ کے پاس حمزہ، ثناء، بلال اور نادیہ کے اکاؤنٹس محفوظ ہیں۔"
+                if detected_lang == "ur"
+                else "You are on your Beneficiaries list. You have Hamza, Sana, Bilal, and Nadia saved."
+            )
+        elif any(x in s for x in ["transfer", "sendmoney"]):
+            spoken_text = (
+                "آپ رقم ٹرانسفر کے پیج پر ہیں۔ یہاں آپ اپنے اکاؤنٹ سے وصول کنندہ اور رقم درج کر کے ٹرانسفر کر سکتے ہیں۔"
+                if detected_lang == "ur"
+                else "You are on the Transfer Funds screen. Select a recipient, enter the amount, and tap Review to proceed."
+            )
+        elif any(x in s for x in ["analytic"]):
+            spoken_text = (
+                "آپ اینالیٹکس اسکرین پر ہیں۔ آپ کے سب سے زیادہ اخراجات کھانے پینے اور یوٹیلٹی بلز پر ہوئے ہیں۔"
+                if detected_lang == "ur"
+                else "You are on Spending Analytics. Your largest expense categories are Dining and Utility Bills."
+            )
+        elif any(x in s for x in ["qr"]):
+            spoken_text = (
+                "آپ کیو آر پے اسکرین پر ہیں۔ کسی بھی مرچنٹ کا کیو آر کوڈ اسکین کر کے فوری ادائیگی کی جا سکتی ہے۔"
+                if detected_lang == "ur"
+                else "You are on QR Scan & Pay. Point your camera at a merchant QR code for instant payment."
+            )
+        elif any(x in s for x in ["cheque"]):
+            spoken_text = (
+                "آپ چیک سروسز اسکرین پر ہیں، جہاں آپ نئی چیک بک حاصل کر سکتے ہیں یا چیک روک سکتے ہیں۔"
+                if detected_lang == "ur"
+                else "You are on Cheque Services, where you can order a new cheque book or stop a cheque."
+            )
+        elif any(x in s for x in ["certificate"]):
+            spoken_text = (
+                "آپ سرٹیفکیٹس اسکرین پر ہیں، جہاں سے اکاؤنٹ مینٹیننس یا ودہولڈنگ ٹیکس سرٹیفکیٹ ڈاؤن لوڈ کیا جا سکتا ہے۔"
+                if detected_lang == "ur"
+                else "You are on the Certificates screen to download Account Maintenance or Tax Certificates."
+            )
+        elif any(x in s for x in ["profile", "security"]):
+            spoken_text = (
+                "آپ پروفائل اور سیکیورٹی سیٹنگز میں ہیں، جہاں بائیو میٹرک اور ذاتی تفصیلات مینج کی جا سکتی ہیں۔"
+                if detected_lang == "ur"
+                else "You are on Profile & Security settings to manage biometric authentication and preferences."
             )
         else:
             spoken_text = (
-                "آپ اس وقت ہوم اسکرین پر موجود ہیں، جہاں آپ بیلنس، حالیہ ٹرانزیکشنز، اور سروسز دیکھ سکتے ہیں۔"
+                "آپ اس وقت بینکنگ پورٹل کی اسکرین پر ہیں، جہاں آپ مختلف مالیاتی سروسز استعمال کر سکتے ہیں۔"
                 if detected_lang == "ur"
-                else "You are on the home screen. You can review your balance, recent activity, and quick services."
+                else "You are on the banking portal, where you can access your financial services."
             )
         guidance = spoken_text
     elif intent == "spending_advice":
