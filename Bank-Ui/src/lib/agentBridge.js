@@ -17,11 +17,36 @@ import { AGENT_SCREEN_EVENT } from '@/lib/agent'
  * without the bridge.
  */
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_AGENT_SOCKET_URL ||
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'ws://localhost:8765/ws'
-    : 'wss://rasta-ai-production.up.railway.app/ws')
+export function getSocketUrl() {
+  if (typeof window !== 'undefined') {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const paramUrl = params.get('agent_url')
+      if (paramUrl) {
+        if (paramUrl === 'default') {
+          localStorage.removeItem('AGENT_SOCKET_URL')
+        } else {
+          localStorage.setItem('AGENT_SOCKET_URL', paramUrl)
+          return paramUrl
+        }
+      }
+    } catch {}
+
+    try {
+      const stored = localStorage.getItem('AGENT_SOCKET_URL')
+      if (stored) return stored
+    } catch {}
+
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'ws://localhost:8765/ws'
+    }
+  }
+
+  return (
+    process.env.NEXT_PUBLIC_AGENT_SOCKET_URL ||
+    'wss://rasta-ai-production.up.railway.app/ws'
+  )
+}
 const HIGHLIGHT_CLASS = 'agent-highlight'
 /** A highlight clears on the next screen change, or after this long. */
 const HIGHLIGHT_DURATION_MS = 30_000
@@ -323,13 +348,17 @@ function connect() {
   // Defensive: there is never more than one pending connect attempt.
   clearTimeout(reconnectTimer)
   try {
-    socket = new WebSocket(SOCKET_URL)
+    const url = getSocketUrl()
+    socket = new WebSocket(url)
   } catch {
     scheduleReconnect()
     return
   }
   socket.addEventListener('open', () => {
     reconnectAttempts = 0
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('AGENT_CONNECTION_STATE', { detail: { connected: true, url } }))
+    }
     send({ type: 'AGENT_LANGUAGE', language: currentLanguage })
     // A late-starting or restarted agent missed the last screen change —
     // catch it up with the screen the customer is on right now.
@@ -340,7 +369,12 @@ function connect() {
   socket.addEventListener('message', onSocketMessage)
   // 'error' is always followed by 'close', so reconnecting on close alone
   // covers both a refused first connection and a mid-session drop.
-  socket.addEventListener('close', scheduleReconnect)
+  socket.addEventListener('close', () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('AGENT_CONNECTION_STATE', { detail: { connected: false } }))
+    }
+    scheduleReconnect()
+  })
 }
 
 export function initAgentBridge() {
