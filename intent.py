@@ -23,6 +23,9 @@ INTENT = [
     "security_inquiry",
     "out_of_domain",
     "add_beneficiary_guidance",
+    "read_screen",
+    "spending_advice",
+    "check_bill_status",
     "unknown",
 ]
 
@@ -60,6 +63,9 @@ POLITE_REPLIES = {
         "security_inquiry": "آپ کے تحفظ کے لیے، راستہ اے آئی یا بینک کبھی آپ کا پن یا پاس ورڈ نہیں مانگتا۔ ہر ٹرانزیکشن کے لیے آپ کی بائیو میٹرک یا او ٹی پی تصدیق لازمی ہے۔",
         "out_of_domain": "میں آپ کا راستہ بینکنگ اسسٹنٹ ہوں۔ میں پیسے بھیجنے، بل جمع کروانے، کارڈ سنبھالنے اور بیلنس چیک کرنے میں آپ کی مدد کر سکتا ہوں۔ بتائیں کیا کروں؟",
         "add_beneficiary_guidance": "نیا وصول کنندہ شامل کرنے کے لیے، ہائی لائٹ کیے گئے بٹن پر ٹیپ کریں اور اکاؤنٹ کی تفصیلات درج کریں۔",
+        "read_screen": "آپ کے اکاؤنٹ میں 2 لاکھ 45 ہزار روپے موجود ہیں۔ آخری ٹرانزیکشن 500 روپے کی فوڈ پانڈا پر ہوئی تھی۔",
+        "spending_advice": "اس مہینے آپ کا کھانے پینے کا خرچ پچھلے مہینے سے 18 فیصد زیادہ ہے۔ میں نے خرچ کا چارٹ کھول دیا ہے۔",
+        "check_bill_status": "آپ کا کے-الیکٹرک کا بل 4 دن میں ڈیو ہے، رقم 8 ہزار 450 روپے ہے۔ میں نے بل والا پیج کھول دیا ہے۔",
         "unknown": "معاف کیجیے گا، میں سمجھ نہیں پایا۔ کیا آپ پیسے بھیجنا چاہتے ہیں یا بیلنس چیک کرنا چاہتے ہیں؟",
     },
     "en": {
@@ -94,6 +100,9 @@ POLITE_REPLIES = {
         "security_inquiry": "For your security, Zenith Bank and Rasta AI never have access to your PIN or password. All transfers require your personal biometric or OTP confirmation.",
         "out_of_domain": "I am your Zenith banking assistant. While I cannot check the weather or browse the web, I can help you send money, pay bills, check your balance, or manage cards.",
         "add_beneficiary_guidance": "To add a new beneficiary, tap the highlighted option, enter their bank details, and save them for instant transfers.",
+        "read_screen": "Your account balance is 245,000 rupees. Your last transaction was 500 rupees at Foodpanda.",
+        "spending_advice": "This month your food and dining spend is 18% higher than last month. I have opened your spending analysis.",
+        "check_bill_status": "Your K-Electric bill of PKR 8,450 is due in 4 days. I have opened the bill payment page.",
         "unknown": "I'm sorry, I didn't quite catch that. Would you like to check your balance, pay a bill, or transfer funds?",
     }
 }
@@ -138,6 +147,9 @@ Rules:
 - SECURITY / PIN: If user asks for password/PIN or security ('what is my pin', 'mera password kya hai', 'is it safe'), classify as 'security_inquiry'.
 - OUT OF DOMAIN: If user asks unrelated queries ('weather', 'pizza', 'who is prime minister', 'joke'), classify as 'out_of_domain'.
 - ADD BENEFICIARY: If user asks to add new contact/payee ('add beneficiary', 'naya banda add karna', 'new payee'), classify as 'add_beneficiary_guidance'.
+- READ SCREEN / ACCESSIBILITY: If user asks to read the screen, what is written here, or read numbers aloud ('read my screen', 'ye kya likha hai', 'mujhe parh ke sunao', 'parho', 'screen par kya hai'), classify as 'read_screen'.
+- SPENDING ADVICE: If user asks about their spending, where their money went, or budget insights ('mera kharcha kaisa raha', 'where did my money go', 'spending analysis', 'kharch kahan hua', 'budget advice'), classify as 'spending_advice'.
+- BILL STATUS / ALERTS: If user asks about due bills, upcoming bills, or bill notifications ('any bills due', 'koi bill baqi hai', 'upcoming bills', 'mera bill kab aana hai'), classify as 'check_bill_status'.
 - Language Mirroring: If the input is in English, reply in friendly English and set "language": "en". If the input is Urdu or Roman Urdu, reply in Urdu and set "language": "ur".
 """
 

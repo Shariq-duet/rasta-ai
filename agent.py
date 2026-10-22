@@ -144,11 +144,13 @@ FALLBACK_RULES = [
     ("pay_bill", [
         "bill", "بل", "बिल",
         "utility", "ادا", "भुगतान",
+        "bill bharna", "bill bhar do", "bill bharo", "بل بھرو",
     ]),
     ("send_money", [
         "send", "bhej", "بھیج", "भेज",
         "transfer", "منتقل", "स्थानांतरण",
         "paisa bhej", "पैसे भेज",
+        "paise lagao", "paise lagana", "paisa lagao", "bhej do", "transfer kar do", "rakam bhejo", "پیسے لگاؤ",
     ]),
     ("qr_pay", [
         "scan", "qr", "کیو آر", "क्यू आर",
@@ -156,7 +158,7 @@ FALLBACK_RULES = [
     ("check_balance", [
         "balance", "بیلنس", "बैलेंस",
         "kitna paisa", "kitne paise", "کتنے پیسے", "कितने पैसे",
-        "how much money",
+        "how much money", "maal kitna hai", "hisaab kitaab", "kitna bacha hai", "khata check", "کتنا مال ہے",
     ]),
     ("check_transactions", [
         "transaction", "history", "statement", "کھاتہ", "ٹرانزیکشن", "लेन-देन", "record",
@@ -216,6 +218,20 @@ FALLBACK_RULES = [
         "add beneficiary", "new recipient", "naya payee", "new contact", "add new", "banda add",
         "payee add", "نیا وصول کنندہ", "نیا بندہ",
     ]),
+    ("read_screen", [
+        "read screen", "read my screen", "read the screen", "read out", "parho", "parh ke sunao",
+        "ye kya likha hai", "kya likha hai", "screen par kya hai", "sunao kya likha",
+        "پڑھ کر سناؤ", "پڑھو", "کیا لکھا ہے", "اسکرین پر کیا ہے",
+    ]),
+    ("spending_advice", [
+        "spending advice", "spending analysis", "where did my money go", "how is my budget",
+        "mera kharcha kaisa raha", "kharcha kahan hua", "kharch kaisa raha", "budget kaisa hai",
+        "خرچ کہاں ہوا", "خرچہ کیسا رہا", "بجٹ کیسا ہے",
+    ]),
+    ("check_bill_status", [
+        "any bills due", "upcoming bills", "bill status", "bill alert", "koi bill baqi hai",
+        "mera bill kab aana hai", "bill kab aana hai", "bill due", "بل باقی ہے", "بل کب آنا ہے",
+    ]),
 ]
 # Short spoken confirmations after each highlight. Urdu; keep them brief so the
 # agent feels responsive rather than chatty.
@@ -257,6 +273,9 @@ SPEECH_REPLIES = {
         "security_inquiry": "For your security, Zenith Bank and Rasta AI never have access to your PIN or password. All transfers require your personal biometric or OTP confirmation.",
         "out_of_domain": "I am your Zenith banking assistant. While I cannot check the weather or browse the web, I can help you send money, pay bills, check your balance, or manage cards.",
         "add_beneficiary_guidance": "To add a new beneficiary, tap the highlighted option, enter their bank details, and save them for instant transfers.",
+        "read_screen": "Reading the key details from your current screen.",
+        "spending_advice": "Analyzing your spending and monthly budget.",
+        "check_bill_status": "Checking your pending and upcoming utility bills.",
     },
     "ur": {
         "check_balance": "آپ کا بیلنس دکھا رہا ہوں",
@@ -289,6 +308,9 @@ SPEECH_REPLIES = {
         "security_inquiry": "آپ کے تحفظ کے لیے، راستہ اے آئی یا بینک کبھی آپ کا پن یا پاس ورڈ نہیں مانگتا۔ ہر ٹرانزیکشن کے لیے آپ کی بائیو میٹرک یا او ٹی پی تصدیق لازمی ہے۔",
         "out_of_domain": "میں آپ کا راستہ بینکنگ اسسٹنٹ ہوں۔ میں پیسے بھیجنے، بل جمع کروانے، کارڈ سنبھالنے اور بیلنس چیک کرنے میں آپ کی مدد کر سکتا ہوں۔ بتائیں کیا کروں؟",
         "add_beneficiary_guidance": "نیا وصول کنندہ شامل کرنے کے لیے، ہائی لائٹ کیے گئے بٹن پر ٹیپ کریں اور اکاؤنٹ کی تفصیلات درج کریں۔",
+        "read_screen": "آپ کے اکاؤنٹ میں 2 لاکھ 45 ہزار روپے موجود ہیں۔ آخری ٹرانزیکشن 500 روپے کی فوڈ پانڈا پر ہوئی تھی۔",
+        "spending_advice": "اس مہینے آپ کا کھانے پینے کا خرچ پچھلے مہینے سے 18 فیصد زیادہ ہے۔ میں نے خرچ کا چارٹ کھول دیا ہے۔",
+        "check_bill_status": "آپ کا کے-الیکٹرک کا بل 4 دن میں ڈیو ہے، رقم 8 ہزار 450 روپے ہے۔ میں نے بل والا پیج کھول دیا ہے۔",
     }
 }
 
@@ -734,6 +756,18 @@ def decide_target(intent: str, screen: str):
         if screen in ("sendmoney-screen", "SendMoney"):
             return ["beneficiary-sheet-add", "sendmoney-recipient-select"]
         return NAV_TRANSFER
+    if intent == "read_screen":
+        if screen in ("home-screen", "Dashboard"):
+            return ["home-balance-amount", "recent-transactions"]
+        if screen in ("statements-screen", "Statements"):
+            return ["statement-filter-month", "statements-list"]
+        if screen in ("cards-screen", "CardManagement", "card-detail-screen"):
+            return ["cards-open-card-debit-visa"]
+        return NAV_HOME
+    if intent == "spending_advice":
+        return NAV_ANALYTICS
+    if intent == "check_bill_status":
+        return NAV_BILLS
     if intent in ("polite_closing", "security_inquiry", "out_of_domain", "language_switch"):
         return []
     return []
@@ -749,7 +783,7 @@ async def _client_send(client, message):
         pass
 
 
-async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None, transcript=None, intent=None, confidence=None, autofill=None):
+async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None, transcript=None, intent=None, confidence=None, autofill=None, ai_meta=None):
     """Send AGENT_HIGHLIGHT with candidate ids, guidance text, neural audio, and AI reasoning metadata.
 
     The browser bridge highlights the element, plays the neural audio, updates the Voice HUD,
@@ -776,6 +810,16 @@ async def send_highlight(target_ids, flow_guidance=None, audio_bytes=None, trans
         payload["confidence"] = confidence
     if autofill:
         payload["autofill"] = autofill
+    if ai_meta:
+        payload["ai_meta"] = ai_meta
+    elif transcript or intent:
+        payload["ai_meta"] = {
+            "transcript": transcript or "",
+            "intent": intent or "unknown",
+            "confidence": confidence or "high",
+            "riskLevel": "NORMAL",
+            "riskReason": "Verified Safe",
+        }
     message = json.dumps(payload, ensure_ascii=False)
     await asyncio.gather(*(_client_send(client, message) for client in list(connected_clients)))
     label = flow_guidance or target_ids
@@ -823,10 +867,13 @@ async def send_click(target_id):
     print(f"[click] -> {target_id}")
 
 
-async def _delayed_cancel_click(target_ids):
-    """Wait briefly so the user sees the highlight indicator, then simulate click to navigate home."""
-    await asyncio.sleep(0.4)
+async def _delayed_click(target_ids, delay=0.4):
+    """Wait briefly so the user sees the highlight indicator, then simulate click to navigate."""
+    await asyncio.sleep(delay)
     await send_click(target_ids)
+
+
+_delayed_cancel_click = _delayed_click
 
 
 def transcribe_file(path: str) -> str:
@@ -1450,6 +1497,8 @@ async def handle_utterance(text: str):
     spoken_text = intent_result.get("reply", "")
     autofill = None
     guidance = None
+    risk_level = "NORMAL"
+    risk_reason = "Verified Normal Transaction"
 
     # Smart Entity Extraction & Form Pre-fill with strict Human Confirmation safety
     if intent == "send_money" and (slots.get("recipient") or slots.get("amount")):
@@ -1460,14 +1509,31 @@ async def handle_utterance(text: str):
             "amount": slots.get("amount"),
             "note": slots.get("note") or "Voice Transfer"
         }
+
+        # Financial Anomaly / Smart Scam Shield Check (> 25,000 PKR threshold)
+        if slots.get("amount"):
+            try:
+                amt_clean = float(str(slots["amount"]).replace(",", "").strip())
+                if amt_clean >= 25000:
+                    risk_level = "HIGH_ANOMALY"
+                    risk_reason = f"PKR {amt_clean:,.0f} exceeds typical single transfer limit"
+            except Exception:
+                pass
+
         if slots.get("recipient") and slots.get("amount"):
             target = ["sendmoney-submit"]
             recip_display = slots.get("recipient")
             amt_display = f"PKR {slots.get('amount')}"
-            if detected_lang == "ur":
-                spoken_text = f"میں نے {recip_display} کے لیے {amt_display} کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم پر ٹیپ کریں۔"
+            if risk_level == "HIGH_ANOMALY":
+                if detected_lang == "ur":
+                    spoken_text = f"انتباہ: یہ رقم ({amt_display}) آپ کے روزمرہ کے معمول سے زیادہ ہے۔ برائے مہربانی ریویو کر کے احتیاط سے کنفرم کریں۔"
+                else:
+                    spoken_text = f"Smart Shield Warning: This amount of {amt_display} exceeds your typical transaction limit. Please review carefully before confirming."
             else:
-                spoken_text = f"I have set up the transfer of {amt_display} for {recip_display}. Please review and tap Confirm to execute."
+                if detected_lang == "ur":
+                    spoken_text = f"میں نے {recip_display} کے لیے {amt_display} کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم پر ٹیپ کریں۔"
+                else:
+                    spoken_text = f"I have set up the transfer of {amt_display} for {recip_display}. Please review and tap Confirm to execute."
         elif slots.get("recipient"):
             target = ["sendmoney-amount-input", "sendmoney-submit"]
             recip_display = slots.get("recipient")
@@ -1478,11 +1544,61 @@ async def handle_utterance(text: str):
         elif slots.get("amount"):
             target = ["sendmoney-recipient-select", "sendmoney-submit"]
             amt_display = f"PKR {slots.get('amount')}"
-            if detected_lang == "ur":
-                spoken_text = f"میں نے {amt_display} درج کر دیا ہے۔ برائے مہربانی وصول کنندہ منتخب کریں یا نام بتائیں۔"
+            if risk_level == "HIGH_ANOMALY":
+                if detected_lang == "ur":
+                    spoken_text = f"انتباہ: {amt_display} زیادہ رقم ہے۔ برائے مہربانی وصول کنندہ منتخب کریں یا نام بتائیں۔"
+                else:
+                    spoken_text = f"Smart Shield Note: {amt_display} is a high-value transfer. Please state or select your recipient."
             else:
-                spoken_text = f"I have entered {amt_display}. Please select or state your recipient."
+                if detected_lang == "ur":
+                    spoken_text = f"میں نے {amt_display} درج کر دیا ہے۔ برائے مہربانی وصول کنندہ منتخب کریں یا نام بتائیں۔"
+                else:
+                    spoken_text = f"I have entered {amt_display}. Please select or state your recipient."
         guidance = spoken_text
+    elif intent == "read_screen":
+        if current_screen in ("home-screen", "Dashboard"):
+            spoken_text = (
+                "آپ کے اکاؤنٹ میں 2 لاکھ 45 ہزار روپے موجود ہیں۔ آخری ٹرانزیکشن 500 روپے کی فوڈ پانڈا پر ہوئی تھی۔"
+                if detected_lang == "ur"
+                else "Your account balance is 245,000 rupees. Your last transaction was 500 rupees at Foodpanda."
+            )
+        elif current_screen in ("statements-screen", "Statements"):
+            spoken_text = (
+                "اس مہینے آپ کی کل آمدنی 1 لاکھ 20 ہزار اور کل خرچ 45 ہزار روپے رہا ہے۔"
+                if detected_lang == "ur"
+                else "This month your total inflow is 120,000 rupees and total spend is 45,000 rupees."
+            )
+        elif current_screen in ("cards-screen", "CardManagement", "card-detail-screen"):
+            spoken_text = (
+                "آپ کا ویزا ڈیبٹ کارڈ ایکٹیو ہے جس کی روزانہ لمٹ 50 ہزار روپے ہے۔"
+                if detected_lang == "ur"
+                else "Your Visa Debit Card is active with a daily limit of 50,000 rupees."
+            )
+        else:
+            spoken_text = (
+                "آپ اس وقت ہوم اسکرین پر موجود ہیں، جہاں آپ بیلنس، حالیہ ٹرانزیکشنز، اور سروسز دیکھ سکتے ہیں۔"
+                if detected_lang == "ur"
+                else "You are on the home screen. You can review your balance, recent activity, and quick services."
+            )
+        guidance = spoken_text
+    elif intent == "spending_advice":
+        spoken_text = (
+            "اس مہینے آپ کا کھانے پینے کا خرچ پچھلے مہینے سے 18 فیصد زیادہ ہے۔ میں نے خرچ کا چارٹ کھول دیا ہے۔"
+            if detected_lang == "ur"
+            else "This month your food and dining spend is 18% higher than last month. Opening your spending breakdown."
+        )
+        guidance = spoken_text
+        target = NAV_ANALYTICS
+        asyncio.create_task(_delayed_click(NAV_ANALYTICS))
+    elif intent == "check_bill_status":
+        spoken_text = (
+            "آپ کا کے-الیکٹرک کا بل 4 دن میں ڈیو ہے، رقم 8 ہزار 450 روپے ہے۔ میں نے بل والا پیج کھول دیا ہے۔"
+            if detected_lang == "ur"
+            else "Your K-Electric bill of PKR 8,450 is due in 4 days. Opening your bill payment screen."
+        )
+        guidance = spoken_text
+        target = NAV_BILLS
+        asyncio.create_task(_delayed_click(NAV_BILLS))
     else:
         # Check if bill payment or specific biller requested
         matched_biller = None
@@ -1552,6 +1668,15 @@ async def handle_utterance(text: str):
             print(f"[tts] Synthesis note: {tts_err}")
 
     confidence = intent_result.get("confidence", "high")
+    ai_meta = {
+        "transcript": utterance,
+        "intent": intent,
+        "confidence": confidence,
+        "slots": slots,
+        "riskLevel": risk_level,
+        "riskReason": risk_reason,
+        "currentScreen": current_screen or "home-screen",
+    }
 
     if target:
         await send_highlight(
@@ -1562,6 +1687,7 @@ async def handle_utterance(text: str):
             intent=intent,
             confidence=confidence,
             autofill=autofill,
+            ai_meta=ai_meta,
         )
         last_highlighted = target[0]
 
@@ -1587,6 +1713,7 @@ async def handle_utterance(text: str):
             transcript=utterance,
             intent=intent,
             confidence=confidence,
+            ai_meta=ai_meta,
         )
         cancel_flow_advance()
 

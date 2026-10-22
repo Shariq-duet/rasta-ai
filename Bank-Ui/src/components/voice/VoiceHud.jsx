@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   Languages,
   ShieldCheck,
+  ShieldAlert,
+  Cpu,
   ChevronUp,
 } from 'lucide-react'
 import { sendAgentAudio, sendLanguageChoice, sendAgentUtterance, stopAgentAudio } from '@/lib/agentBridge'
@@ -93,6 +95,38 @@ const DEMO_SCENARIOS = [
     category: 'Support',
     description: 'Opens profile & helpline assistance with 24/7 bank contact details.',
   },
+  {
+    id: 'read-screen',
+    title: 'Read Screen (Financial Inclusion)',
+    urduTitle: 'مجھے پڑھ کر سناؤ',
+    utterance: 'مجھے پڑھ کے سناؤ اسکرین پر کیا لکھا ہے',
+    category: 'Inclusion',
+    description: 'Speaks out screen balance & transactions for illiterate or elderly banking users.',
+  },
+  {
+    id: 'spending-advice',
+    title: 'Spending Analysis & Budget',
+    urduTitle: 'خرچ کا جائزہ اور بجٹ',
+    utterance: 'میرا اس مہینے کا خرچہ کیسا رہا',
+    category: 'AI Advisory',
+    description: 'Proactively identifies top categories, month-over-month deltas, and opens analytics.',
+  },
+  {
+    id: 'bill-alert',
+    title: 'Upcoming Bill Due Alert',
+    urduTitle: 'بجلی کا بل الرٹ',
+    utterance: 'کوئی بل باقی ہے کیا',
+    category: 'Bill Alert',
+    description: 'Alerts user about K-Electric due bill and routes straight to one-tap payment.',
+  },
+  {
+    id: 'anomaly-shield',
+    title: 'Smart Scam Shield (>PKR 25k)',
+    urduTitle: 'اسمارٹ سیکیورٹی وارننگ',
+    utterance: 'حمزہ کو 50000 روپے بھیجو',
+    category: 'Fraud Defense',
+    description: 'Flags unusual high-value transfer, triggers risk alert, and requires human confirmation.',
+  },
 ]
 
 export function VoiceHud() {
@@ -107,6 +141,7 @@ export function VoiceHud() {
   const [recordDuration, setRecordDuration] = useState(0)
   const [activeLangIndex, setActiveLangIndex] = useState(0) // default 0 = Urdu
   const [showScenarios, setShowScenarios] = useState(false)
+  const [showAiBrain, setShowAiBrain] = useState(false)
 
   // Speech & AI Status
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -176,7 +211,7 @@ export function VoiceHud() {
           navigateIfDifferent(ROUTES.certificates)
         } else if (intent === 'check_transactions' || intent === 'view_statements') {
           navigateIfDifferent(ROUTES.statements)
-        } else if (intent === 'view_analytics') {
+        } else if (intent === 'view_analytics' || intent === 'spending_advice') {
           navigateIfDifferent(ROUTES.analytics)
         } else if (intent === 'find_branch') {
           navigateIfDifferent(ROUTES.locator)
@@ -186,7 +221,7 @@ export function VoiceHud() {
           navigateIfDifferent(ROUTES.dashboard)
         } else if (intent === 'send_money' && !data.autofill) {
           navigateIfDifferent(ROUTES.transfer)
-        } else if (intent === 'pay_bill' && !data.autofill) {
+        } else if ((intent === 'pay_bill' || intent === 'check_bill_status') && !data.autofill) {
           navigateIfDifferent(ROUTES.bills)
         }
       }
@@ -399,6 +434,21 @@ export function VoiceHud() {
               </button>
             </div>
 
+            {/* Smart Scam Shield / Anomaly Warning */}
+            {latestAgentMessage?.ai_meta?.riskLevel === 'HIGH_ANOMALY' && (
+              <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50/95 p-2.5 text-amber-950 shadow-xs animate-fade-in">
+                <ShieldAlert size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-2xs">
+                  <span className="font-bold uppercase tracking-wider text-amber-900 block">
+                    Smart Shield: High-Value Anomaly Flagged
+                  </span>
+                  <span className="text-amber-800">
+                    {latestAgentMessage.ai_meta.riskReason || 'Transaction exceeds typical single transfer limit. Please verify recipient.'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Recognized User Speech */}
             {latestAgentMessage.transcript && (
               <div className="mt-2 text-xs text-ink-muted" dir="auto">
@@ -419,12 +469,157 @@ export function VoiceHud() {
             )}
 
             {/* Safe Guardrail Disclaimer Badge */}
-            <div className="mt-3 flex items-center gap-1.5 text-3xs font-medium text-ink-muted">
-              <ShieldCheck size={12} className="text-secondary" />
-              <span>Human verification required: AI guides & fills forms but never submits money without your approval.</span>
+            <div className="mt-3 flex items-center justify-between text-3xs font-medium text-ink-muted">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck size={12} className="text-secondary" />
+                <span>Human verification required: AI guides & fills forms but never submits money without your approval.</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAiBrain(true)
+                  setShowScenarios(false)
+                }}
+                className="font-bold text-brand-700 hover:underline flex items-center gap-1"
+              >
+                <Cpu size={11} />
+                <span>Inspect Brain</span>
+              </button>
             </div>
           </div>
         </aside>
+      )}
+
+      {/* 2b. AI Brain / Live Telemetry Inspector Drawer */}
+      {showAiBrain && (
+        <section
+          role="region"
+          aria-label="AI Brain Real-Time Reasoning Inspector"
+          className="fixed inset-x-4 bottom-[calc(var(--bottomnav-height)+5.5rem)] z-40 mx-auto max-w-xl animate-sheet-up"
+        >
+          <div className="overflow-hidden rounded-3xl border border-brand-200 bg-surface/98 p-5 shadow-2xl backdrop-blur-2xl ring-1 ring-brand-500/10">
+            <div className="flex items-center justify-between pb-3 border-b border-line">
+              <div className="flex items-center gap-2">
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-600 text-white font-bold">
+                  <Cpu size={16} />
+                </span>
+                <div>
+                  <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                    AI Brain Inspector
+                    <span className="rounded-full bg-emerald-100 text-emerald-800 text-3xs font-extrabold px-2 py-0.5 uppercase">
+                      Live Telemetry
+                    </span>
+                  </h3>
+                  <p className="text-2xs text-ink-muted">
+                    Real-time speech-to-intent reasoning, entity extraction, and risk assessment
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAiBrain(false)}
+                aria-label="Close AI Brain"
+                className="grid h-7 w-7 place-items-center rounded-lg text-ink-muted hover:bg-canvas hover:text-ink"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="mt-3.5 space-y-3 max-h-72 overflow-y-auto pr-1">
+              {/* Architecture Pipeline Flow */}
+              <div className="rounded-xl border border-line bg-canvas/70 p-2.5">
+                <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted block mb-1.5">
+                  Autonomous Pipeline Stack
+                </span>
+                <div className="flex items-center justify-between text-2xs font-semibold text-ink">
+                  <span className="flex items-center gap-1 rounded bg-brand-50 text-brand-700 px-1.5 py-0.5">
+                    🎙️ Whisper
+                  </span>
+                  <span>➔</span>
+                  <span className="flex items-center gap-1 rounded bg-accent-50 text-accent-700 px-1.5 py-0.5">
+                    🧠 Groq LLM
+                  </span>
+                  <span>➔</span>
+                  <span className="flex items-center gap-1 rounded bg-emerald-50 text-emerald-700 px-1.5 py-0.5">
+                    🏷️ Entity Slots
+                  </span>
+                  <span>➔</span>
+                  <span className="flex items-center gap-1 rounded bg-purple-50 text-purple-700 px-1.5 py-0.5">
+                    🔊 Neural TTS
+                  </span>
+                </div>
+              </div>
+
+              {/* Active Utterance & Intent */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-line bg-canvas/60 p-2.5">
+                  <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted block">
+                    Recognized Speech
+                  </span>
+                  <p className="mt-1 text-xs font-semibold text-brand-800 truncate" dir="auto">
+                    {latestAgentMessage?.transcript ? `"${latestAgentMessage.transcript}"` : 'Awaiting voice input…'}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-line bg-canvas/60 p-2.5">
+                  <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted block">
+                    Intent Classification
+                  </span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-ink truncate">
+                      {latestAgentMessage?.intent ? latestAgentMessage.intent.replace(/_/g, ' ') : 'Idle'}
+                    </span>
+                    {latestAgentMessage?.confidence && (
+                      <span className="text-3xs font-extrabold text-emerald-700 bg-emerald-100 rounded px-1.5 py-0.2 shrink-0">
+                        {latestAgentMessage.confidence}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Extracted Slots & Risk Assessment */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-line bg-canvas/60 p-2.5">
+                  <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted block">
+                    Extracted Entity Slots
+                  </span>
+                  <div className="mt-1 text-2xs font-mono text-ink space-y-0.5">
+                    {latestAgentMessage?.ai_meta?.slots && Object.keys(latestAgentMessage.ai_meta.slots).length > 0 ? (
+                      Object.entries(latestAgentMessage.ai_meta.slots).map(([k, v]) => (
+                        <div key={k} className="flex justify-between">
+                          <span className="text-ink-muted">{k}:</span>
+                          <span className="font-bold text-brand-700">{String(v ?? '—')}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-ink-muted italic">No active slots</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-line bg-canvas/60 p-2.5">
+                  <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted block">
+                    Security Risk Analysis
+                  </span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {latestAgentMessage?.ai_meta?.riskLevel === 'HIGH_ANOMALY' ? (
+                      <span className="flex items-center gap-1 text-2xs font-bold text-amber-800 bg-amber-100 rounded px-2 py-0.5">
+                        <ShieldAlert size={12} className="text-amber-600" /> High Anomaly
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-2xs font-bold text-emerald-800 bg-emerald-100 rounded px-2 py-0.5">
+                        <ShieldCheck size={12} className="text-emerald-600" /> Normal Safe
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-3xs text-ink-muted line-clamp-1">
+                    {latestAgentMessage?.ai_meta?.riskReason || 'Biometric authorization required before funds release.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
       {/* 2. Interactive Stage Demo Scenarios Drawer */}
@@ -587,6 +782,22 @@ export function VoiceHud() {
             }`}
           >
             <Zap size={15} />
+          </button>
+
+          {/* Real-time AI Brain Inspector Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowAiBrain((prev) => !prev)}
+            aria-label="AI Brain Telemetry Inspector"
+            title="Open Live AI Brain Telemetry Inspector"
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-2xs font-bold transition-all ${
+              showAiBrain
+                ? 'bg-gradient-to-r from-brand-600 to-accent-600 text-white shadow-fab'
+                : 'bg-canvas text-ink-muted hover:bg-brand-50 hover:text-brand-600'
+            }`}
+          >
+            <Sparkles size={13} className={showAiBrain ? 'animate-spin' : 'text-accent-500'} />
+            <span className="hidden sm:inline font-mono">AI Brain</span>
           </button>
         </div>
       </div>

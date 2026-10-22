@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Loader2, Mic, Square } from 'lucide-react'
-import { sendAgentAudio } from '@/lib/agentBridge'
+import { sendAgentAudio, stopAgentAudio } from '@/lib/agentBridge'
 import { useBankStore } from '@/hooks/use-bank-store'
 
 /** Recording auto-stops after this long — enough for a full bilingual sentence. */
@@ -39,6 +39,7 @@ export function MicButton() {
 
   async function handleStart() {
     if (state !== 'idle') return
+    stopAgentAudio()
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
