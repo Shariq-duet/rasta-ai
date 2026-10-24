@@ -594,6 +594,7 @@ is_modal_open = False
 # banking UI; the browser sends AGENT_LANGUAGE to update _stt_language.
 # Defaults to Urdu (native Pakistani banking assistant) until the UI or user says otherwise.
 _stt_language = "ur"
+_agent_mode = "smart_fill"  # "smart_fill" (instant autopilot) | "guided" (step-by-step hand-holding)
 
 _whisper_model = None  # loaded lazily on first `voice` command
 last_highlighted = None  # the data-agent-id of the most recent highlight
@@ -1565,7 +1566,17 @@ async def handle_utterance(text: str):
             except Exception:
                 pass
 
-        if raw_recip and not matched_b:
+        if _agent_mode == "guided":
+            # Guidance Mode: Human in full control — navigate & highlight element without auto-typing
+            target = ["sendmoney-recipient-select", "side-nav-transfers", "mobile-nav-transfers"]
+            last_intent = "send_money"
+            if detected_lang == "ur":
+                spoken_text = "رہنمائی موڈ: میں نے رقم ٹرانسفر کا صفحہ کھول دیا ہے۔ پہلے وصول کنندہ منتخب کریں، پھر رقم درج کریں۔"
+            else:
+                spoken_text = "Guidance Mode: I have opened the transfer screen. First, tap to select your recipient."
+            guidance = spoken_text
+            autofill = None
+        elif raw_recip and not matched_b:
             # Recipient provided but NOT found in registered beneficiaries
             is_autofill_active = True
             risk_level = "UNKNOWN_BENEFICIARY"
@@ -1755,37 +1766,54 @@ async def handle_utterance(text: str):
         )
 
         if should_autofill_bill and matched_biller:
-            b_amt = slots.get("amount") or matched_biller["amount"]
-            is_autofill_active = True
-            autofill = {
-                "type": "bill",
-                "biller": matched_biller["id"],
-                "amount": str(b_amt)
-            }
-            if current_screen in ("paybill-screen", "BillPayments"):
-                target = ["paybill-submit", f"paybill-biller-{matched_biller['id']}"]
+            if _agent_mode == "guided":
+                target = ["paybill-biller-select", "side-nav-bills", "mobile-nav-bills"]
+                last_intent = "pay_bill"
+                if detected_lang == "ur":
+                    spoken_text = f"رہنمائی موڈ: میں نے بل ادائیگی کھول دی ہے۔ براہ کرم فہرست میں سے {matched_biller['name_ur']} منتخب کریں۔"
+                else:
+                    spoken_text = f"Guidance Mode: I have opened bill payments. Please tap to select {matched_biller['name']}."
+                guidance = spoken_text
+                autofill = None
             else:
-                target = ["paybill-submit", "side-nav-bills", "mobile-nav-bills"]
-            last_intent = "pay_bill"
-            if detected_lang == "ur":
-                spoken_text = f"میں نے آپ کا {matched_biller['name_ur']} کا بل برائے {b_amt} روپے منتخب کر دیا ہے۔ برائے مہربانی ریویو کر کے آگے بڑھیں۔"
-            else:
-                spoken_text = f"I have selected your {matched_biller['name']} bill for PKR {b_amt}. Please review and tap Review Payment to proceed."
-            guidance = spoken_text
+                b_amt = slots.get("amount") or matched_biller["amount"]
+                is_autofill_active = True
+                autofill = {
+                    "type": "bill",
+                    "biller": matched_biller["id"],
+                    "amount": str(b_amt)
+                }
+                if current_screen in ("paybill-screen", "BillPayments"):
+                    target = ["paybill-submit", f"paybill-biller-{matched_biller['id']}"]
+                else:
+                    target = ["paybill-submit", "side-nav-bills", "mobile-nav-bills"]
+                last_intent = "pay_bill"
+                if detected_lang == "ur":
+                    spoken_text = f"میں نے آپ کا {matched_biller['name_ur']} کا بل برائے {b_amt} روپے منتخب کر دیا ہے۔ برائے مہربانی ریویو کر کے آگے بڑھیں۔"
+                else:
+                    spoken_text = f"I have selected your {matched_biller['name']} bill for PKR {b_amt}. Please review and tap Review Payment to proceed."
+                guidance = spoken_text
         elif intent == "pay_bill" and slots.get("amount"):
-            is_autofill_active = True
-            autofill = {
-                "type": "bill",
-                "biller": "k-electric",
-                "amount": slots.get("amount")
-            }
-            target = ["paybill-submit", "side-nav-bills", "mobile-nav-bills"]
-            last_intent = "pay_bill"
-            if detected_lang == "ur":
-                spoken_text = "میں نے بل کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم کریں۔"
+            if _agent_mode == "guided":
+                target = ["paybill-biller-select", "side-nav-bills", "mobile-nav-bills"]
+                last_intent = "pay_bill"
+                spoken_text = "رہنمائی موڈ: میں نے بل ادائیگی کھول دی ہے۔ پہلے اپنا بلر منتخب کریں۔" if detected_lang == "ur" else "Guidance Mode: I have opened bill payments. Please tap to select your biller."
+                guidance = spoken_text
+                autofill = None
             else:
-                spoken_text = "I have filled in the bill payment details for you. Please review and tap Confirm to execute."
-            guidance = spoken_text
+                is_autofill_active = True
+                autofill = {
+                    "type": "bill",
+                    "biller": "k-electric",
+                    "amount": slots.get("amount")
+                }
+                target = ["paybill-submit", "side-nav-bills", "mobile-nav-bills"]
+                last_intent = "pay_bill"
+                if detected_lang == "ur":
+                    spoken_text = "میں نے بل کی تفصیلات درج کر دی ہیں۔ برائے مہربانی ریویو کر کے کنفرم کریں۔"
+                else:
+                    spoken_text = "I have filled in the bill payment details for you. Please review and tap Confirm to execute."
+                guidance = spoken_text
         elif target:
             guidance = resolve_guidance(FLOW_GUIDANCE, target[0], detected_lang)
             canonical = INTENT_TO_FLOW.get(intent, intent)
@@ -1810,6 +1838,7 @@ async def handle_utterance(text: str):
         "riskLevel": risk_level,
         "riskReason": risk_reason,
         "currentScreen": current_screen or "home-screen",
+        "mode": _agent_mode,
     }
 
     if target:
@@ -1853,7 +1882,7 @@ async def handle_utterance(text: str):
 
 
 async def handler(websocket):
-    global current_screen, last_intent, _stt_language, is_autofill_active, is_modal_open
+    global current_screen, last_intent, _stt_language, _agent_mode, is_autofill_active, is_modal_open
     connected_clients.add(websocket)
     print(f"[+] Client connected. Total: {len(connected_clients)}")
     try:
@@ -1871,6 +1900,10 @@ async def handler(websocket):
             if data.get("type") == "AGENT_LANGUAGE":
                 _stt_language = data.get("language", "ur")
                 print(f"[lang] speech-to-text language set to: {_stt_language}")
+                continue
+            if data.get("type") == "AGENT_MODE":
+                _agent_mode = data.get("mode", "smart_fill")
+                print(f"[mode] interaction mode set to: {_agent_mode}")
                 continue
             if data.get("type") == "AGENT_MODAL_STATE":
                 is_modal_open = bool(data.get("open", False))

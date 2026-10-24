@@ -17,8 +17,9 @@ import {
   ShieldAlert,
   Cpu,
   ChevronUp,
+  Compass,
 } from 'lucide-react'
-import { sendAgentAudio, sendLanguageChoice, sendAgentUtterance, stopAgentAudio } from '@/lib/agentBridge'
+import { sendAgentAudio, sendLanguageChoice, sendAgentUtterance, stopAgentAudio, sendAgentMode } from '@/lib/agentBridge'
 import { useBankStore } from '@/hooks/use-bank-store'
 import { ROUTES } from '@/lib/constants'
 import { VoiceWaveform } from './VoiceWaveform'
@@ -150,6 +151,7 @@ export function VoiceHud() {
   const [activeLangIndex, setActiveLangIndex] = useState(0) // default 0 = Urdu
   const [showScenarios, setShowScenarios] = useState(false)
   const [showAiBrain, setShowAiBrain] = useState(false)
+  const [agentMode, setAgentMode] = useState('smart_fill') // 'smart_fill' | 'guided'
 
   // Speech & AI Status
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -165,10 +167,20 @@ export function VoiceHud() {
 
   const currentLang = LANGUAGES[activeLangIndex]
 
-  // Synchronize language choice to backend on mount and whenever it changes
+  // Synchronize language and mode choices to backend on mount and whenever changed
   useEffect(() => {
     sendLanguageChoice(LANGUAGES[activeLangIndex].code)
   }, [activeLangIndex])
+
+  useEffect(() => {
+    sendAgentMode(agentMode)
+  }, [agentMode])
+
+  function handleModeToggle() {
+    const nextMode = agentMode === 'smart_fill' ? 'guided' : 'smart_fill'
+    setAgentMode(nextMode)
+    sendAgentMode(nextMode)
+  }
 
   // Cleanup on unmount
   useEffect(() => {
@@ -533,6 +545,11 @@ export function VoiceHud() {
                     <span className="rounded-full bg-emerald-100 text-emerald-800 text-3xs font-extrabold px-2 py-0.5 uppercase">
                       Live Telemetry
                     </span>
+                    <span className={`rounded-full text-3xs font-extrabold px-2 py-0.5 uppercase ${
+                      agentMode === 'smart_fill' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-brand-100 text-brand-900 border border-brand-300'
+                    }`}>
+                      {agentMode === 'smart_fill' ? '⚡ Smart Fill' : '🎯 Guidance'}
+                    </span>
                   </h3>
                   <p className="text-2xs text-ink-muted">
                     Real-time speech-to-intent reasoning, entity extraction, and risk assessment
@@ -729,6 +746,31 @@ export function VoiceHud() {
           >
             <Languages size={13} className="text-ink-muted" />
             <span>{currentLang.short}</span>
+          </button>
+
+          {/* Mode Toggle: Smart Fill vs Step-by-Step Guidance */}
+          <button
+            type="button"
+            onClick={handleModeToggle}
+            aria-label={`Current Mode: ${agentMode === 'smart_fill' ? 'Smart Autofill' : 'Step-by-Step Guidance'}. Tap to switch.`}
+            title={`Mode: ${agentMode === 'smart_fill' ? 'Smart Fill (Autopilot)' : 'Guidance (Step-by-Step)'}`}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-2xs font-bold transition-all shadow-2xs ${
+              agentMode === 'smart_fill'
+                ? 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
+                : 'bg-brand-50 text-brand-800 border border-brand-300 hover:bg-brand-100'
+            }`}
+          >
+            {agentMode === 'smart_fill' ? (
+              <>
+                <Zap size={12} className="text-amber-600 fill-amber-500" />
+                <span className="hidden sm:inline">{currentLang.code === 'ur' ? 'آٹوفل' : 'Smart Fill'}</span>
+              </>
+            ) : (
+              <>
+                <Compass size={12} className="text-brand-600" />
+                <span className="hidden sm:inline">{currentLang.code === 'ur' ? 'رہنمائی' : 'Guidance'}</span>
+              </>
+            )}
           </button>
 
           {/* Dynamic Voice Core */}

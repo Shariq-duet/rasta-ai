@@ -80,11 +80,22 @@ export function sendAgentAudio(base64Audio, mimeType) {
 }
 
 let currentLanguage = 'ur'
+let currentMode = 'smart_fill' // 'smart_fill' | 'guided'
 
 /** Tell the agent which language the user will speak in. */
 export function sendLanguageChoice(language) {
   if (language) currentLanguage = language
   send({ type: 'AGENT_LANGUAGE', language: currentLanguage })
+}
+
+/** Tell the agent whether to auto-fill slots or provide step-by-step guidance. */
+export function sendAgentMode(mode) {
+  if (mode) currentMode = mode
+  send({ type: 'AGENT_MODE', mode: currentMode })
+}
+
+export function getAgentMode() {
+  return currentMode
 }
 
 function clearHighlight() {
@@ -361,6 +372,7 @@ function connect() {
       window.dispatchEvent(new CustomEvent('AGENT_CONNECTION_STATE', { detail: { connected: true, url: socket?.url || url } }))
     }
     send({ type: 'AGENT_LANGUAGE', language: currentLanguage })
+    send({ type: 'AGENT_MODE', mode: currentMode })
     // A late-starting or restarted agent missed the last screen change —
     // catch it up with the screen the customer is on right now.
     if (window.__AGENT_SCREEN__) {
