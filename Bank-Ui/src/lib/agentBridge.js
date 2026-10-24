@@ -347,8 +347,9 @@ function scheduleReconnect() {
 function connect() {
   // Defensive: there is never more than one pending connect attempt.
   clearTimeout(reconnectTimer)
+  let url = ''
   try {
-    const url = getSocketUrl()
+    url = getSocketUrl()
     socket = new WebSocket(url)
   } catch {
     scheduleReconnect()
@@ -357,7 +358,7 @@ function connect() {
   socket.addEventListener('open', () => {
     reconnectAttempts = 0
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('AGENT_CONNECTION_STATE', { detail: { connected: true, url } }))
+      window.dispatchEvent(new CustomEvent('AGENT_CONNECTION_STATE', { detail: { connected: true, url: socket?.url || url } }))
     }
     send({ type: 'AGENT_LANGUAGE', language: currentLanguage })
     // A late-starting or restarted agent missed the last screen change —
