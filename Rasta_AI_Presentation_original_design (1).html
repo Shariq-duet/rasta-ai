@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rasta AI — Voice-guided digital banking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-surface: #0d121d;
+      --bg-card: rgba(18, 24, 38, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(16, 185, 129, 0.3);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-urdu: 'Noto Nastaliq Urdu', serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient background gradient orbs */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+      animation: float 20s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, #059669 0%, transparent 70%); top: -15%; left: -10%; }
+    .orb-2 { width: 45vw; height: 45vw; background: radial-gradient(circle, #0284c7 0%, transparent 70%); bottom: -10%; right: -5%; animation-duration: 25s; }
+    .orb-3 { width: 35vw; height: 35vw; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); top: 40%; left: 35%; opacity: 0.2; animation-duration: 18s; }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 100;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--emerald), var(--cyan), var(--purple));
+      width: 14.28%;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px var(--cyan);
+    }
+
+    /* Top Brand Bar */
+    .top-header {
+      position: fixed;
+      top: 1.5rem;
+      left: 2rem;
+      right: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      pointer-events: none;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      pointer-events: auto;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--emerald), #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      box-shadow: 0 0 20px var(--emerald-glow);
+    }
+    .logo-text {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .logo-tag {
+      font-size: 0.75rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--emerald);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 0.5rem;
+      pointer-events: auto;
+    }
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Slide Deck Viewport */
+    .presentation-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 6rem;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96) translateY(20px);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+    }
+    .slide.prev {
+      transform: scale(1.02) translateY(-20px);
+    }
+
+    .slide-inner {
+      max-width: 1200px;
+      width: 100%;
+      height: 100%;
+      max-height: 720px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Typography & Headers */
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--cyan);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      width: fit-content;
+    }
+    .slide-badge.purple {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #a78bfa;
+    }
+    .slide-badge.emerald {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--emerald);
+    }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .slide-subtitle {
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 800px;
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.75rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+
+    /* Glass Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.85rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .card.highlight {
+      border-color: var(--border-highlight);
+      box-shadow: 0 10px 30px var(--emerald-glow);
+    }
+
+    /* Glowing icons */
+    .icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      margin-bottom: 1.25rem;
+    }
+    .icon-box.emerald { color: var(--emerald); background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); }
+    .icon-box.cyan { color: var(--cyan); background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.25); }
+    .icon-box.purple { color: #a78bfa; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.25); }
+
+    /* Big Metric Display */
+    .stat-number {
+      font-family: var(--font-heading);
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--emerald) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-number.purple {
+      background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Waveform Animation */
+    .wave-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 36px;
+    }
+    .wave-bar {
+      width: 4px;
+      background: var(--emerald);
+      border-radius: 4px;
+      animation: wave 1.2s ease-in-out infinite alternate;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; height: 60%; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; height: 100%; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; height: 80%; }
+    .wave-bar:nth-child(5) { animation-delay: 0.6s; height: 40%; }
+    @keyframes wave {
+      0% { height: 20%; }
+      100% { height: 100%; }
+    }
+
+    /* Architecture Flow Pipeline */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .pipe-step {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+    .pipe-arrow {
+      font-size: 1.5rem;
+      color: var(--cyan);
+      opacity: 0.6;
+    }
+
+    /* Urdu text styling */
+    .urdu-quote {
+      font-family: var(--font-urdu);
+      font-size: 1.6rem;
+      direction: rtl;
+      line-height: 1.8;
+      color: #34d399;
+      margin-top: 0.5rem;
+    }
+
+    /* Bottom Controller Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(18, 24, 38, 0.85);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.2rem;
+      border-radius: 999px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      z-index: 50;
+    }
+    .dock-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    .dock-btn:hover {
+      background: var(--emerald);
+      color: #000;
+      border-color: var(--emerald);
+      transform: scale(1.08);
+    }
+    .slide-counter {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+    .slide-counter span {
+      color: #fff;
+    }
+
+    /* Modal / Presenter Notes Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: -320px;
+      left: 0;
+      right: 0;
+      height: 300px;
+      background: rgba(13, 18, 29, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(25px);
+      padding: 2rem 4rem;
+      transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 80;
+    }
+    .notes-drawer.open {
+      bottom: 0;
+    }
+
+    /* Grid Overview Modal */
+    .grid-overview {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 9, 14, 0.95);
+      backdrop-filter: blur(25px);
+      z-index: 90;
+      display: none;
+      padding: 4rem 6rem;
+      overflow-y: auto;
+    }
+    .grid-overview.open {
+      display: block;
+    }
+    .thumbnail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .thumb-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .thumb-card:hover {
+      border-color: var(--emerald);
+      transform: translateY(-4px);
+    }
+
+    /* Checkmark list */
+    .check-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .check-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 1.05rem;
+      color: #cbd5e1;
+    }
+    .check-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light Orbs -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Top Brand Navigation -->
+  <header class="top-header">
+    <div class="logo-container">
+      <div class="logo-icon">R</div>
+      <div class="logo-text">RASTA AI</div>
+      <div class="logo-tag" onclick="openVideoModal('new record.mp4')" style="cursor: pointer;" title="Play Offline Prototype Videos">Offline prototype 🎬</div>
+    </div>
+    <div class="top-actions">
+      <button class="pill-btn" onclick="toggleOverview()" title="View all slides (G)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview (G)
+      </button>
+      <button class="pill-btn" onclick="toggleNotes()" title="Speaker pitch notes (N)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Notes (N)
+      </button>
+      <button class="pill-btn" onclick="toggleFullscreen()" title="Fullscreen (F)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        Fullscreen (F)
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Slides -->
+  <main class="presentation-container">
+    <!-- SLIDE 1 -->
+    <section class="slide active" id="slide-1" data-notes="Introduce the team and the project in one sentence, then move straight to the story. Total talk time about 10 minutes.">
+      <div class="slide-inner" style="align-items: center; text-align: center;">
+        <div class="slide-badge emerald">Financial inclusion through voice</div>
+        <h1 class="slide-title" style="font-size: 5rem; margin-bottom: 1.5rem;">RASTA AI</h1>
+        <p class="slide-subtitle" style="font-size: 1.6rem; color: #cbd5e1; max-width: 900px; margin-bottom: 2.5rem;">Voice guidance for digital banking, for people who are not comfortable with their phones</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem; flex-wrap: wrap;">
+          <button class="pill-btn" onclick="openVideoModal('new record.mp4')" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); padding: 0.95rem 2rem; border-radius: 999px; cursor: pointer; color: var(--text-main); font-family: var(--font-body); font-size: 1rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.75rem; transition: all 0.2s ease;">
+            <span style="display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--emerald); color: #000; font-size: 0.75rem; font-weight: 900;">▶</span>
+            <span>Offline prototype: New Record</span>
+          </button>
+          <button class="pill-btn" onclick="openVideoModal('new record2.mp4')" style="background: rgba(6, 182, 212, 0.15); border: 1px solid var(--cyan); padding: 0.95rem 2rem; border-radius: 999px; cursor: pointer; color: var(--text-main); font-family: var(--font-body); font-size: 1rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.75rem; transition: all 0.2s ease;">
+            <span style="display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--cyan); color: #000; font-size: 0.75rem; font-weight: 900;">▶</span>
+            <span>Offline prototype: New Record 2</span>
+          </button>
+        </div>
+        <div><button class="pill-btn" onclick="nextSlide()" style="padding: 0.85rem 2rem; font-size: 1rem; font-weight: 700; background: var(--emerald); color: #000; border-color: var(--emerald); border-radius: 999px;">Start Presentation &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2 -->
+    <section class="slide" id="slide-2" data-notes="Tell the story slowly. Then ask the room: How many of you have ever sent money for a parent? Wait for hands. Do not rush past the pause.">
+      <div class="slide-inner">
+        <div class="slide-badge purple">The story</div>
+        <h2 class="slide-title">A woman in her sixties stands at a small shop.</h2>
+        <p class="slide-subtitle" style="max-width: 900px;">She needs to send money to her son in another city. The banking app looks like a locked door to her, so she hands her phone to the shopkeeper and asks him to do it. She has no way to check what he does with it.</p>
+        <div class="card highlight" style="max-width: 900px;">
+          <strong style="color: var(--emerald); font-size: 1.3rem;">We built Rasta AI so she never has to hand over her phone.</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3 -->
+    <section class="slide" id="slide-3" data-notes="Say this clearly and early. We are showing a working prototype, not a bank product. Name the known gap yourself before a judge does. Speech recognition needs internet, so the demo depends on the network at the venue.">
+      <div class="slide-inner">
+        <div class="slide-badge cyan">What we are showing</div>
+        <h2 class="slide-title">A working prototype, not a bank product</h2>
+        <div class="grid-3">
+          <div class="card"><div class="icon-box cyan">✓</div><h3 style="font-size: 1.2rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">What is built</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Three banking flows run end to end: check balance, send money, and pay a bill.</p></div>
+          <div class="card"><div class="icon-box purple">☁</div><h3 style="font-size: 1.2rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">How it runs</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">The demo runs on one laptop. Speech recognition uses cloud services: AssemblyAI, with Google as fallback.</p></div>
+          <div class="card highlight"><div class="icon-box emerald">!</div><h3 style="font-size: 1.2rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Known gap</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Completed payments do not yet update the account balance or transaction history.</p></div>
+        </div>
+        <p style="margin-top: 2rem; color: var(--text-dim); font-size: 0.95rem;">Not yet built: a bank integration, an independent security review, or testing with real users.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 4 -->
+    <section class="slide" id="slide-4" data-notes="The fear is the real barrier. Some people give their phone to a vendor because they do not trust the process. Our confirmation step is designed to address that fear directly.">
+      <div class="slide-inner">
+        <div class="slide-badge">The problem</div>
+        <h2 class="slide-title">Three things stop people using banking apps</h2>
+        <div class="grid-3">
+          <div class="card"><div class="icon-box cyan">1</div><h3 style="font-size: 1.2rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">English-first menus</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Many screens use English wording that first-time users do not know.</p></div>
+          <div class="card"><div class="icon-box purple">2</div><h3 style="font-size: 1.2rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Banking jargon</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Terms such as IBFT, Raast and CVV mean little to someone new to digital banking.</p></div>
+          <div class="card"><div class="icon-box emerald">3</div><h3 style="font-size: 1.2rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Long confirmation steps</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Several screens must be read before a single payment is confirmed.</p></div>
+        </div>
+        <div class="card highlight" style="margin-top: 2rem;"><strong>And underneath all three: fear of sending money to the wrong person.</strong></div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5 -->
+    <section class="slide" id="slide-5" data-notes="Name the first bank we pitched, State Bank of Pakistan, as validation, not a commitment: the feedback was encouraging, but there is no agreement yet. Say the business model is still being decided.">
+      <div class="slide-inner">
+        <div class="slide-badge purple">Who we serve</div>
+        <h2 class="slide-title">Who we serve, and who would buy it</h2>
+        <div class="grid-2">
+          <div class="card"><h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem;">Users</h3><ul style="color: var(--text-muted); font-size: 1rem; line-height: 1.9; padding-left: 1.2rem;"><li>Elderly customers</li><li>Rural customers</li><li>First-time smartphone owners</li><li>Anyone who has handed their phone to someone else</li></ul></div>
+          <div class="card"><h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem;">Buyers</h3><ul style="color: var(--text-muted); font-size: 1rem; line-height: 1.9; padding-left: 1.2rem;"><li>Banks</li><li>Digital wallets and fintech companies</li></ul></div>
+        </div>
+        <p style="margin-top: 1.5rem; color: var(--text-dim); font-size: 0.95rem; font-style: italic;">Business model is not final. Options under discussion: a license fee per bank, or a fee per transaction.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 6 -->
+    <section class="slide" id="slide-6" data-notes="Demonstrate the Urdu example live during the demo, not here. Confirm before the talk that the read-back really happens before the user confirms. The trust statement must match the build you demo.">
+      <div class="slide-inner">
+        <div class="slide-badge emerald">Our solution</div>
+        <h2 class="slide-title">Speak, see, and confirm</h2>
+        <div class="grid-3">
+          <div class="card highlight"><div class="icon-box emerald">1</div><h3 style="font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Speak</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Say what you want in everyday Urdu or English.</p><p style="margin-top: 0.75rem; color: var(--cyan); font-style: italic;">"Mujhe bijli ka bill jama karna hai."</p></div>
+          <div class="card highlight"><div class="icon-box cyan">2</div><h3 style="font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">See</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">The exact button on the app is highlighted with a pulsing ring.</p></div>
+          <div class="card highlight"><div class="icon-box purple">3</div><h3 style="font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Hear</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Before the user confirms, the agent reads back the recipient and the amount.</p></div>
+        </div>
+        <div class="card" style="margin-top: 2rem; background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2);"><strong style="color: var(--emerald);">Trust:</strong> the agent sits on top of the app. In our demo build it sees screen elements and the user's voice, not account data, PINs or passwords.</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7 -->
+    <section class="slide" id="slide-7" data-notes="Name the intent model in this talk once you have confirmed it. Be ready for the question: where does the audio go? Answer: to AssemblyAI, and to Google if the fallback runs. Speech recognition needs internet access.">
+      <div class="slide-inner">
+        <div class="slide-badge cyan">How it works</div>
+        <h2 class="slide-title">How one request moves through the system</h2>
+        <div class="pipeline">
+          <div class="pipe-step"><div class="icon-box cyan" style="margin-bottom: 0.75rem;">1</div><h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.35rem;">Speech</h4><p style="font-size: 0.85rem; color: var(--text-muted);">Microphone input from the user</p></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step"><div class="icon-box purple" style="margin-bottom: 0.75rem;">2</div><h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.35rem;">Transcription</h4><p style="font-size: 0.85rem; color: var(--text-muted);">AssemblyAI, with Google as fallback</p></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step"><div class="icon-box emerald" style="margin-bottom: 0.75rem;">3</div><h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.35rem;">Intent</h4><p style="font-size: 0.85rem; color: var(--text-muted);">Works out what the user wants</p></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" style="border-color: var(--border-highlight);"><div class="icon-box emerald" style="margin-bottom: 0.75rem;">4</div><h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.35rem;">Screen map</h4><p style="font-size: 0.85rem; color: var(--text-muted);">Only screens that exist in the app</p></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step"><div class="icon-box cyan" style="margin-bottom: 0.75rem;">5</div><h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.35rem;">Spoken reply</h4><p style="font-size: 0.85rem; color: var(--text-muted);">Reads each step aloud</p></div>
+        </div>
+        <div style="margin-top: 2rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 12px; font-size: 1rem; color: var(--text-main);">The app can only move to screens that exist in its map. It cannot invent a new action.</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8 -->
+    <section class="slide" id="slide-8" data-notes="Before the talk, record the three flows on the laptop and keep the video ready. If the network fails, switch to the recording and say so openly. Do not pretend the live demo is working when it is not.">
+      <div class="slide-inner">
+        <div class="slide-badge emerald">Live demo</div>
+        <h2 class="slide-title">Three flows, shown live</h2>
+        <div class="grid-3">
+          <div class="card"><div class="icon-box emerald">1</div><h3 style="font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Check balance</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Ask in Urdu or English and watch the screen follow.</p></div>
+          <div class="card"><div class="icon-box cyan">2</div><h3 style="font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Send money</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Watch the read-back happen before confirmation.</p></div>
+          <div class="card"><div class="icon-box purple">3</div><h3 style="font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem;">Pay a bill</h3><p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Step-by-step highlighting from start to success.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9 -->
+    <section class="slide" id="slide-9" data-notes="Do not say no competitor exists. Say that IVR helplines exist and explain the difference: they do not show the user the screen. Be ready for the question about integration cost.">
+      <div class="slide-inner">
+        <div class="slide-badge cyan">Why us</div>
+        <h2 class="slide-title">A phone helpline tells you what to press. We show you.</h2>
+        <div class="grid-2">
+          <div class="card"><h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem;">Phone helpline (IVR)</h3><ul style="color: var(--text-muted); font-size: 1rem; line-height: 1.9; padding-left: 1.2rem;"><li>Tells you what to press</li><li>You have to remember the steps</li><li>Cannot see your own app</li></ul></div>
+          <div class="card highlight"><h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--emerald);">Rasta AI</h3><ul style="color: var(--text-main); font-size: 1rem; line-height: 1.9; padding-left: 1.2rem;"><li>Highlights the button on your own app</li><li>Speaks each step as you go</li><li>Confirms the amount before you confirm</li></ul></div>
+        </div>
+        <p style="margin-top: 1.5rem; color: var(--text-dim); font-size: 0.95rem;">A bank that adopts Rasta AI must tag its screens. That is a one-time integration cost.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 10 -->
+    <section class="slide" id="slide-10" data-notes="Close on the story. Remind the judges of the woman at the shop. Then take questions. Answers to prepare: privacy (audio goes to AssemblyAI and Google), integration cost (screen tagging), and business model (not final).">
+      <div class="slide-inner" style="align-items: center; text-align: center;">
+        <div class="slide-badge purple">Thank you</div>
+        <h2 class="slide-title" style="font-size: 3.6rem; max-width: 1000px; margin-bottom: 2rem;">Banking should not require handing your phone to a stranger.</h2>
+        <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 700; color: var(--emerald);">Questions?</div>
+        <p style="margin-top: 1.5rem; color: var(--text-dim);">Rasta AI | Offline prototype demo</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Video Player Modal for Offline Prototype -->
+  <div class="video-modal-overlay" id="videoModal" style="display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(7, 9, 14, 0.94); backdrop-filter: blur(16px); align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-highlight); border-radius: 20px; width: 100%; max-width: 980px; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.85);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--bg);">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <h3 style="font-family: var(--font-heading); color: var(--text-main); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+            🎬 Offline Prototype Recording
+          </h3>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="tabVideo1" class="pill-btn" onclick="switchVideo('new record.mp4', 1)" style="background: var(--emerald); color: #000; font-weight: 700; padding: 0.4rem 1.1rem;">
+              New Record
+            </button>
+            <button id="tabVideo2" class="pill-btn" onclick="switchVideo('new record2.mp4', 2)" style="background: rgba(255,255,255,0.06); color: var(--text-main); font-weight: 700; padding: 0.4rem 1.1rem;">
+              New Record 2
+            </button>
+          </div>
+        </div>
+        <button class="pill-btn" onclick="closeVideoModal()" style="font-size: 1rem; padding: 0.45rem 1.1rem; border-color: rgba(255,255,255,0.2);">✕ Close [ESC]</button>
+      </div>
+      <div style="padding: 1rem; background: #000; flex: 1; display: flex; align-items: center; justify-content: center;">
+        <video id="demoVideoPlayer" controls playsinline style="max-width: 100%; max-height: 68vh; border-radius: 12px; background: #000;" src="new record.mp4">
+          Your browser does not support HTML5 video.
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Floating Controller Dock -->
+  <nav class="bottom-dock">
+    <button class="dock-btn" onclick="prevSlide()" title="Previous (Left Arrow)">❮</button>
+    <div class="slide-counter">
+      <span id="currentSlideNum">01</span> / 10
+    </div>
+    <button class="dock-btn" onclick="nextSlide()" title="Next (Right Arrow / Space)">❯</button>
+  </nav>
+
+  <!-- Speaker Notes Drawer -->
+  <aside class="notes-drawer" id="notesDrawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--cyan); font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+        🎙️ Speaker Talking Points
+      </h3>
+      <button class="pill-btn" onclick="toggleNotes()">Close [N]</button>
+    </div>
+    <p id="speakerNotesText" style="font-size: 1.15rem; line-height: 1.6; color: #e2e8f0;">
+      Opening hook: Welcome judges. In Pakistan, millions have smartphones, but digital banking remains out of reach because apps are too confusing.
+    </p>
+  </aside>
+
+  <!-- Grid Overview Modal -->
+  <div class="grid-overview" id="gridOverview">
+    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+      <h2 style="font-family: var(--font-heading); font-size: 2rem; font-weight: 800;">Slide Overview</h2>
+      <button class="pill-btn" onclick="toggleOverview()">Close [G]</button>
+    </div>
+    <div class="thumbnail-grid" id="thumbnailGrid" style="max-width: 1200px; margin: 2rem auto 0;"></div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 10;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    const slideNum = document.getElementById('currentSlideNum');
+    const notesDrawer = document.getElementById('notesDrawer');
+    const speakerNotesText = document.getElementById('speakerNotesText');
+    const gridOverview = document.getElementById('gridOverview');
+    const thumbnailGrid = document.getElementById('thumbnailGrid');
+
+    // Populate Slide Grid Overview
+    slides.forEach((slide, idx) => {
+      const titleElem = slide.querySelector('.slide-title');
+      const title = titleElem ? titleElem.innerText.replace(/\n/g, ' ') : `Slide ${idx + 1}`;
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb-card';
+      thumb.innerHTML = `
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--emerald); margin-bottom: 0.5rem;">SLIDE 0${idx + 1}</div>
+        <div style="font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; line-height: 1.3;">${title}</div>
+      `;
+      thumb.onclick = () => {
+        goToSlide(idx + 1);
+        toggleOverview();
+      };
+      thumbnailGrid.appendChild(thumb);
+    });
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'prev');
+        if (index + 1 === currentSlide) {
+          slide.classList.add('active');
+          const notes = slide.getAttribute('data-notes') || 'No speaker notes for this slide.';
+          speakerNotesText.innerText = notes;
+        } else if (index + 1 < currentSlide) {
+          slide.classList.add('prev');
+        }
+      });
+
+      slideNum.innerText = currentSlide.toString().padStart(2, '0');
+      progressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateSlide();
+      }
+    }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+
+    function toggleOverview() {
+      gridOverview.classList.toggle('open');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        goToSlide(1);
+      } else if (e.key === 'End') {
+        goToSlide(totalSlides);
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 'n') {
+        toggleNotes();
+      } else if (e.key.toLowerCase() === 'g') {
+        toggleOverview();
+      } else if (e.key === 'Escape') {
+        notesDrawer.classList.remove('open');
+        gridOverview.classList.remove('open');
+        closeVideoModal();
+      }
+    });
+
+    // Video Modal Controller for Offline Prototype Demos
+    function openVideoModal(videoSrc = 'new record.mp4') {
+      const modal = document.getElementById('videoModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        switchVideo(videoSrc, videoSrc.includes('2') ? 2 : 1);
+      }
+    }
+
+    function closeVideoModal() {
+      const modal = document.getElementById('videoModal');
+      const player = document.getElementById('demoVideoPlayer');
+      if (modal) {
+        if (player) player.pause();
+        modal.style.display = 'none';
+      }
+    }
+
+    function switchVideo(src, num) {
+      const player = document.getElementById('demoVideoPlayer');
+      const tab1 = document.getElementById('tabVideo1');
+      const tab2 = document.getElementById('tabVideo2');
+      if (player) {
+        player.src = src;
+        player.play().catch(() => {});
+      }
+      if (tab1 && tab2) {
+        if (num === 1) {
+          tab1.style.background = 'var(--emerald)';
+          tab1.style.color = '#000';
+          tab2.style.background = 'rgba(255,255,255,0.06)';
+          tab2.style.color = 'var(--text-main)';
+        } else {
+          tab2.style.background = 'var(--emerald)';
+          tab2.style.color = '#000';
+          tab1.style.background = 'rgba(255,255,255,0.06)';
+          tab1.style.color = 'var(--text-main)';
+        }
+      }
+    }
+
+    // Touch Swipe Support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+    document.addEventListener('touchend', e => {
+      let touchEndX = e.changedTouches[0].screenX;
+      if (touchStartX - touchEndX > 50) nextSlide();
+      if (touchEndX - touchStartX > 50) prevSlide();
+    }, false);
+
+    updateSlide();
+  </script>
+</body>
+</html>
