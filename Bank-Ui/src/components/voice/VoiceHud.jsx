@@ -569,16 +569,21 @@ export function VoiceHud() {
             <div className="mt-3.5 space-y-3 max-h-72 overflow-y-auto pr-1">
               {/* Architecture Pipeline Flow */}
               <div className="rounded-xl border border-line bg-canvas/70 p-2.5">
-                <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted block mb-1.5">
-                  Autonomous Pipeline Stack
-                </span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-3xs font-bold uppercase tracking-wider text-ink-muted">
+                    Autonomous Pipeline Stack
+                  </span>
+                  <span className="text-3xs font-mono font-bold text-accent-700 bg-accent-50 border border-accent-200 rounded px-1.5 py-0.2">
+                    {latestAgentMessage?.ai_meta?.provider || 'Nebius Token Factory'}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between text-2xs font-semibold text-ink">
                   <span className="flex items-center gap-1 rounded bg-brand-50 text-brand-700 px-1.5 py-0.5">
                     🎙️ Whisper
                   </span>
                   <span>➔</span>
-                  <span className="flex items-center gap-1 rounded bg-accent-50 text-accent-700 px-1.5 py-0.5">
-                    🧠 Groq LLM
+                  <span className="flex items-center gap-1 rounded bg-accent-50 text-accent-700 px-1.5 py-0.5 font-mono">
+                    ⚡ {latestAgentMessage?.ai_meta?.model ? (latestAgentMessage.ai_meta.model.includes('/') ? latestAgentMessage.ai_meta.model.split('/')[1] : latestAgentMessage.ai_meta.model) : 'Nemotron-3-Super'}
                   </span>
                   <span>➔</span>
                   <span className="flex items-center gap-1 rounded bg-emerald-50 text-emerald-700 px-1.5 py-0.5">

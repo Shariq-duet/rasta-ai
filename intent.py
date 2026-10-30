@@ -1,6 +1,13 @@
 import json
 import requests
-from ai_config import get_groq_key, get_groq_model
+from ai_config import (
+    get_groq_key,
+    get_groq_model,
+    get_nebius_key,
+    get_nebius_base_url,
+    get_nebius_model,
+    is_nebius_available,
+)
 
 INTENT = [
     "check_balance", "send_money", "check_transactions", "pay_bill",
@@ -154,6 +161,48 @@ Rules:
 """
 
 
+def classify_with_nebius_nemotron(transcript: str, current_screen: str) -> dict:
+    """Inference via Nebius Token Factory powered by NVIDIA Nemotron (e.g. nvidia/nemotron-3-super-120b-a12b)."""
+    nebius_key = get_nebius_key()
+    if not nebius_key:
+        raise ValueError("NEBIUS_API_KEY not configured")
+
+    base_url = get_nebius_base_url().rstrip("/") + "/chat/completions"
+    model = get_nebius_model()
+    prompt = f"{SYSTEM_PROMPT}\nCurrent screen: {current_screen}"
+
+    headers = {
+        "Authorization": f"Bearer {nebius_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": transcript},
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.2,
+        "max_tokens": 1500,
+    }
+
+    response = requests.post(
+        base_url,
+        headers=headers,
+        json=payload,
+        timeout=15,
+    )
+    if response.status_code >= 400:
+        raise RuntimeError(f"Nebius Token Factory API error ({response.status_code}): {response.text}")
+    data = response.json()
+    content = data["choices"][0]["message"]["content"]
+    result = json.loads(content)
+    if isinstance(result, dict):
+        result["_provider"] = "Nebius Token Factory"
+        result["_model"] = model
+    return result
+
+
 def classify_with_groq(transcript: str, current_screen: str) -> dict:
     """Ultra-fast cloud LLM classification via Groq with casual conversational response generation."""
     groq_key = get_groq_key()
@@ -189,6 +238,9 @@ def classify_with_groq(transcript: str, current_screen: str) -> dict:
     data = response.json()
     content = data["choices"][0]["message"]["content"]
     result = json.loads(content)
+    if isinstance(result, dict):
+        result["_provider"] = "Groq"
+        result["_model"] = model
     return result
 
 
@@ -209,24 +261,37 @@ def classify_with_ollama(transcript: str, current_screen: str) -> dict:
         timeout=30,
     )
     response.raise_for_status()
-    return json.loads(response.json()["message"]["content"])
+    res = json.loads(response.json()["message"]["content"])
+    if isinstance(res, dict):
+        res["_provider"] = "Ollama Local"
+        res["_model"] = "qwen2.5:3b-instruct"
+    return res
 
 
 def classify_intent(transcript: str, current_screen: str) -> dict:
-    """Classify user intent using Groq cloud LLM first, falling back to local Ollama.
+    """Classify user intent using Nebius Token Factory (NVIDIA Nemotron) first,
+    falling back to Groq cloud LLM, then local Ollama.
     
     Returns a dict with 'intent', 'confidence', 'language', and 'reply'.
     """
     result = None
 
-    # Tier 1: Groq Cloud LLM (fast, conversational, high precision)
-    if get_groq_key():
+    # Tier 1: Nebius Token Factory (NVIDIA Nemotron open models on Nebius AI Cloud)
+    if is_nebius_available():
+        try:
+            result = classify_with_nebius_nemotron(transcript, current_screen)
+            print(f"[intent] Nebius Token Factory ({get_nebius_model()}) resolved utterance.")
+        except Exception as nebius_err:
+            print(f"[intent] Nebius Token Factory notice: {nebius_err}. Falling back to next tier...")
+
+    # Tier 2: Groq Cloud LLM (fast, conversational, high precision fallback)
+    if not result and get_groq_key():
         try:
             result = classify_with_groq(transcript, current_screen)
         except Exception as groq_err:
             print(f"[intent] Groq inference notice: {groq_err}. Trying Ollama fallback...")
 
-    # Tier 2: Ollama Local SLM
+    # Tier 3: Ollama Local SLM
     if not result:
         try:
             result = classify_with_ollama(transcript, current_screen)
